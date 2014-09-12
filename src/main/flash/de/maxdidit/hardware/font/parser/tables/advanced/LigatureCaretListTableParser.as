@@ -64,7 +64,7 @@ package de.maxdidit.hardware.font.parser.tables.advanced
 		 
 		public function parseTable(data:ByteArray, position:uint):*  
 		{ 
-			data.position = offset; 
+			data.position = position; 
 			 
 			var result:LigatureCaretListTableData = new LigatureCaretListTableData(); 
 			 
