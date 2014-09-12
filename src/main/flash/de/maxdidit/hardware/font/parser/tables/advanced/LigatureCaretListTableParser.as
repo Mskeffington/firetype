@@ -62,7 +62,7 @@ package de.maxdidit.hardware.font.parser.tables.advanced
 		 
 		/* INTERFACE de.maxdidit.hardware.font.parser.tables.ITableParser */ 
 		 
-		public function parseTable(data:ByteArray, offset:uint):*  
+		public function parseTable(data:ByteArray, position:uint):*  
 		{ 
 			data.position = offset; 
 			 
@@ -80,12 +80,12 @@ package de.maxdidit.hardware.font.parser.tables.advanced
 			result.ligatureGlyphTableOffsets = ligatureGlyphTableOffsets; 
 			 
 			var coverageParser:CoverageTableParser = new CoverageTableParser(_dataTypeParser); 
-			result.coverage = coverageParser.parseTable(data, offset + result.coverageOffset); 
+			result.coverage = coverageParser.parseTable(data, position + result.coverageOffset); 
 			 
 			var ligatureGlyphTables:Vector.<LigatureGlyphTable> = new Vector.<LigatureGlyphTable>(); 
 			for (i = 0; i < result.ligatureGlyphCount; i++) 
 			{ 
-				var ligatureGlyphTable:LigatureGlyphTable = parseLigatureGlyphTable(data, offset + result.ligatureGlyphTableOffsets[i]); 
+				var ligatureGlyphTable:LigatureGlyphTable = parseLigatureGlyphTable(data, position + result.ligatureGlyphTableOffsets[i]); 
 				ligatureGlyphTables.push(ligatureGlyphTable); 
 			} 
 			result.ligatureGlyphTables = ligatureGlyphTables; 
@@ -93,9 +93,9 @@ package de.maxdidit.hardware.font.parser.tables.advanced
 			return result; 
 		} 
 		 
-		private function parseLigatureGlyphTable(data:ByteArray, offset:uint):LigatureGlyphTable  
+		private function parseLigatureGlyphTable(data:ByteArray, position:uint):LigatureGlyphTable  
 		{ 
-			data.position = offset; 
+			data.position = position; 
 			 
 			var result:LigatureGlyphTable = new LigatureGlyphTable(); 
 			 
@@ -112,7 +112,7 @@ package de.maxdidit.hardware.font.parser.tables.advanced
 			var caretValues:Vector.<ICaretValue> = new Vector.<ICaretValue>(); 
 			for (i = 0; i < result.caretCount; i++) 
 			{ 
-				var caretValue:ICaretValue = parseCaretValue(data, offset + result.caretValueOffsets[i]); 
+				var caretValue:ICaretValue = parseCaretValue(data, position + result.caretValueOffsets[i]); 
 				caretValues.push(caretValue); 
 			} 
 			result.caretValues = caretValues; 

@@ -59,9 +59,9 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 		 
 		/* INTERFACE de.maxdidit.hardware.font.parser.tables.ISubTableParser */ 
 		 
-		public function parseTable(data:ByteArray, offset:uint):*  
+		public function parseTable(data:ByteArray, position:uint):*  
 		{ 
-			data.position = offset; 
+			data.position = position; 
 			 
 			var result:AlternateSubstitutionSubtable = new AlternateSubstitutionSubtable(); 
 			 
@@ -83,11 +83,11 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 			 
 			if (coverageOffset > 0) 
 			{ 
-				var coverage:ICoverageTable = _coverageTableParser.parseTable(data, offset + coverageOffset); 
+				var coverage:ICoverageTable = _coverageTableParser.parseTable(data, position + coverageOffset); 
 				result.coverage = coverage; 
 			} 
 			 
-			var alternateSets:Vector.<AlternateSetTable> = parseSequences(data, alternateSetOffsets, offset); 
+			var alternateSets:Vector.<AlternateSetTable> = parseSequences(data, alternateSetOffsets, position); 
 			result.alternateSets = alternateSets; 
 			 
 			return result; 

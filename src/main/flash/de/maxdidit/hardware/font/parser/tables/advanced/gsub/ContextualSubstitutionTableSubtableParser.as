@@ -88,7 +88,7 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 			return result; 
 		} 
 		 
-		private function parseContextualSubstitutionTableFormat1(data:ByteArray, offset:uint):IContextualSubstitutionTable  
+		private function parseContextualSubstitutionTableFormat1(data:ByteArray, position:uint):IContextualSubstitutionTable  
 		{ 
 			var result:ContextualSubstitutionTableFormat1 = new ContextualSubstitutionTableFormat1(); 
 			 
@@ -108,11 +108,11 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 			 
 			if (coverageOffset > 0) 
 			{ 
-				var coverage:ICoverageTable = _coverageParser.parseTable(data, offset + coverageOffset); 
+				var coverage:ICoverageTable = _coverageParser.parseTable(data, position + coverageOffset); 
 				result.coverage = coverage; 
 			} 
 			 
-			var subruleSetTables:Vector.<SubRuleSetTable> = parseSubruleSetTables(data, subruleSetOffsets, offset); 
+			var subruleSetTables:Vector.<SubRuleSetTable> = parseSubruleSetTables(data, subruleSetOffsets, position); 
 			result.subruleSetTables = subruleSetTables; 
 			 
 			return result; 
@@ -133,9 +133,9 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 			return result; 
 		} 
 		 
-		private function parseSubruleSetTable(data:ByteArray, offset:uint):SubRuleSetTable  
+		private function parseSubruleSetTable(data:ByteArray, position:uint):SubRuleSetTable  
 		{ 
-			data.position = offset; 
+			data.position = position; 
 			 
 			var result:SubRuleSetTable = new SubRuleSetTable(); 
 			 
@@ -150,7 +150,7 @@ package de.maxdidit.hardware.font.parser.tables.advanced.gsub
 			} 
 			result.subRuleOffsets = subRuleOffsets; 
 			 
-			var subRules:Vector.<SubRuleTable> = parseSubRules(data, subRuleOffsets, offset); 
+			var subRules:Vector.<SubRuleTable> = parseSubRules(data, subRuleOffsets, position); 
 			 
 			return result; 
 		} 
