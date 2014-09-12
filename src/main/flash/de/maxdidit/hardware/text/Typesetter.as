@@ -51,8 +51,14 @@ package de.maxdidit.hardware.text
 	import de.maxdidit.hardware.text.format.HardwareFontFeatures; 
 	import de.maxdidit.hardware.text.format.HardwareTextFormat; 
 	import de.maxdidit.hardware.text.format.HardwareTextFormatListElement; 
+	import de.maxdidit.hardware.text.tags.BoldTag;
+	import de.maxdidit.hardware.text.tags.FontTag;
 	import de.maxdidit.hardware.text.tags.FormatTag; 
+	import de.maxdidit.hardware.text.tags.ItalicTag;
+	import de.maxdidit.hardware.text.tags.TextFormatTag;
 	import de.maxdidit.hardware.text.tags.TextTag; 
+	import de.maxdidit.hardware.text.tags.UnderlineTag;
+	import de.maxdidit.hardware.text.tags.UnknownTag;
 	import de.maxdidit.list.LinkedList; 
 	import flash.text.engine.BreakOpportunity; 
 	import flash.ui.Keyboard; 
@@ -68,6 +74,7 @@ package de.maxdidit.hardware.text
 		// Constants 
 		/////////////////////// 
 		 
+		public static const CHAR_CODE_ESCAPE_CHARACTER:uint = Keyboard.BACKSLASH;
 		public static const CHAR_CODE_SPACE:uint = Keyboard.SPACE; 
 		public static const CHAR_CODE_NEWLINE:uint = "\n".charCodeAt(0); 
 		public static const CHAR_CODE_OPEN_ANGLE_BRACKET:uint = "<".charCodeAt(0); 
@@ -77,6 +84,8 @@ package de.maxdidit.hardware.text
 		// Member Fields 
 		/////////////////////// 
 		 
+		public var _escapeSpecialCharacters:Boolean = true;
+		
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
@@ -210,32 +219,21 @@ package de.maxdidit.hardware.text
 				if (charCode == CHAR_CODE_OPEN_ANGLE_BRACKET) 
 				{ 
 					// check which tag this is. 
-					var closingIndex:uint = text.indexOf(">", i); 
-					if (closingIndex != -1) 
-					{ 
-						var tagContent:String = text.substring(i + 1, closingIndex); 
-						var textTag:TextTag = parseTagContent(tagContent); 
-						if (textTag) 
-						{ 
-							switch (textTag.id) 
-							{ 
-								case TextTag.ID_FORMAT:  
-									var formatTag:FormatTag = textTag as FormatTag; 
-									processFormatTag(formatTag, fontStack, cache); 
-									 
-									switchFont = true; 
-									break; 
-								 
-								case TextTag.ID_FORMAT_CLOSED:  
-									fontStack.removeElement(fontStack.lastElement); 
-									switchFont = true; 
-									break; 
-							} 
-							 
-							i = closingIndex; 
-							continue; 
-						} 
-					} 
+					var closingIndex:int = getClosingBracketIndex (text, i);
+					if ( closingIndex != -1 )
+					{
+						var tagContent:String = text.substring( i + 1, closingIndex );
+						var textTag:TextTag = parseTagContent( tagContent );
+						if ( textTag )
+						{
+							//we really should be passing ALL the containing text here
+							textTag.processTag( fontStack, cache, text, i);
+							switchFont = textTag.triggerFontSwitch;
+							
+							i = closingIndex;
+							continue;
+						}
+					}
 				} 
 				 
 				var glyphIndex:int = cmapData.getGlyphIndex(charCode, 3, 1); 
@@ -256,102 +254,24 @@ package de.maxdidit.hardware.text
 			 
 			return result; 
 		} 
-		 
-		private function processFormatTag(formatTag:FormatTag, fontStack:LinkedList, cache:HardwareCharacterCache):void 
-		{ 
-			var parentFormat:HardwareTextFormat; 
-			var newTextFormat:HardwareTextFormat; 
-			if (formatTag.isFormatIdSet) 
-			{ 
-				newTextFormat = cache.textFormatMap.getTextFormatById(formatTag.formatId); 
-				 
-				if (formatTag.extendsReferencedFormat || !newTextFormat) 
-				{ 
-					// create new text format with the referenced format as parent 
-					parentFormat = newTextFormat; 
-					newTextFormat = new HardwareTextFormat(parentFormat); 
-				} 
-			} 
-			else 
-			{ 
-				parentFormat = (fontStack.lastElement as HardwareTextFormatListElement).hardwareTextFormat; 
-				newTextFormat = new HardwareTextFormat(parentFormat); 
-			} 
-			 
-			// pass on values 
-			if (formatTag.isColorIdSet) 
-			{ 
-				if (cache.textColorMap.hasTextColorId(formatTag.colorId)) 
-				{ 
-					newTextFormat.textColor = cache.textColorMap.getTextColorById(formatTag.colorId); 
-				} 
-			} 
-			else if (formatTag.isColorSet) 
-			{ 
-				newTextFormat.color = formatTag.color; 
-			} 
-			 
-			if (!cache.textColorMap.hasTextColorId(newTextFormat.textColor.id)) 
-			{ 
-				cache.textColorMap.addTextColor(newTextFormat.textColor); 
-			} 
-			 
-			if (formatTag.isScaleSet) 
-			{ 
-				newTextFormat.scale = formatTag.scale; 
-			} 
-			 
-			if (formatTag.isTextAlignSet) 
-			{ 
-				newTextFormat.textAlign = formatTag.textAlign; 
-			} 
-			 
-			if (formatTag.isVertexDistanceSet) 
-			{ 
-				newTextFormat.vertexDistance = formatTag.vertexDistance; 
-			} 
-			 
-			if (formatTag.areFeaturesSet) 
-			{ 
-				newTextFormat.features.copyFrom(formatTag.features); 
-			} 
-			if (parentFormat) 
-			{ 
-				newTextFormat.features.parent = parentFormat.features; 
-			} 
-			 
-			if (formatTag.isScriptTagSet) 
-			{ 
-				newTextFormat.scriptTag = formatTag.scriptTag; 
-			} 
-			 
-			if (formatTag.isLanguageTagSet) 
-			{ 
-				newTextFormat.languageTag = formatTag.languageTag; 
-			} 
-			 
-			if (formatTag.isFontIdSet) 
-			{ 
-				if (cache.fontMap.hasFontId(formatTag.fontId)) 
-				{ 
-					var font:HardwareFont = cache.fontMap.getFontById(formatTag.fontId); 
-					newTextFormat.font = font; 
-				} 
-			} 
-			 
-			if (formatTag.isShearXSet) 
-			{ 
-				newTextFormat.shearX = formatTag.shearX; 
-			} 
-			 
-			if (formatTag.isShearYSet) 
-			{ 
-				newTextFormat.shearY = formatTag.shearY; 
-			} 
-			 
-			fontStack.addElement(new HardwareTextFormatListElement(newTextFormat)); 
-		} 
-		 
+		
+		private function getClosingBracketIndex (text:String, index:int):int
+		{
+			var endBracketIndex:int = text.indexOf (">",index);
+			
+			if (isEscaped (text, endBracketIndex))
+			{
+				endBracketIndex = getClosingBracketIndex (text, endBracketIndex + 1);
+			}
+			
+			return endBracketIndex;
+		}
+		
+		private function isEscaped (text:String, index:int):Boolean
+		{
+			return text.charCodeAt( index - 1 ) == CHAR_CODE_ESCAPE_CHARACTER;
+		}
+		
 		private function parseTagContent(tagContent:String):TextTag 
 		{ 
 			//var tagElements:Array = tagContent.split(/ +/); 
@@ -363,149 +283,69 @@ package de.maxdidit.hardware.text
 			 
 			var spaceIndex:int = tagContent.indexOf(" "); 
 			 
-			var tagName:String; 
-			var tagParameters:String; 
-			 
-			if (spaceIndex != -1) 
-			{ 
-				tagName = tagContent.substring(0, spaceIndex); 
-				tagParameters = tagContent.substring(spaceIndex + 1); 
-			} 
-			else 
-			{ 
-				tagName = tagContent; 
-			} 
-			 
-			switch (tagName) 
-			{ 
+			var textTag:TextTag = null;
+			var tagName:String;
+			var tagParameters:String;
+			var isSelfTerminating:Boolean = false;
+			var isEndTag:Boolean = false;
+			
+			if ( spaceIndex != -1 )
+			{
+				tagName = tagContent.substring( 1, spaceIndex );
+				tagParameters = tagContent.substring( spaceIndex + 1 );
+			}
+			else
+			{
+				tagName = tagContent;
+				tagParameters = "";
+			}
+			
+			if (tagName.charAt (0) == "/")
+			{
+				isEndTag = true;
+			}
+			else if (tagName.charAt (tagName.length - 1) == "/")
+			{
+				isSelfTerminating = true;
+			}
+			
+			switch ( tagName.toLowerCase() )
+			{
 				// Parse the format tag. 
-				case FormatTag.TAG:  
-					var formatTag:FormatTag = parseTagFormatParameters(tagParameters); 
-					return formatTag; 
-				 
-				case FormatTag.TAG_CLOSE:  
-					var tag:TextTag = new FormatTag(); 
-					tag.id = TextTag.ID_FORMAT_CLOSED; 
-					return tag; 
-			} 
-			 
-			return null; 
-		} 
-		 
-		private function parseTagFormatParameters(tagParameters:String):FormatTag 
-		{ 
-			var parameters:Array = tagParameters.match(/([\w]+=["']?[-\w\s,.:]+["']?)/g); 
-			const l:uint = parameters.length; 
-			 
-			var formatTag:FormatTag = new FormatTag(); 
-			 
-			for (var i:uint = 0; i < l; i++) 
-			{ 
-				var parameter:String = parameters[i]; 
-				parseFormatParameter(parameter, formatTag); 
-			} 
-			 
-			return formatTag; 
-		} 
-		 
-		private function parseFormatParameter(parameter:String, formatTag:FormatTag):void 
-		{ 
-			var indexOfEqualSign:int = parameter.indexOf("="); 
-			if (indexOfEqualSign == -1) 
-			{ 
-				return; 
-			} 
-			 
-			var parameterName:String = parameter.substring(0, indexOfEqualSign).toLowerCase(); 
-			var parameterValue:String = parameter.substr(indexOfEqualSign + 1); 
-			parameterValue = parameterValue.replace(/[(\\")']/g, ""); 
-			 
-			switch (parameterName) 
-			{ 
-				case FormatTag.ATTRIBUTE_SCALE:  
-					var number:Number = Number(parameterValue); 
-					formatTag.scale = number; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_COLOR:  
-					var unsignedInt:uint = uint(parameterValue); 
-					formatTag.color = unsignedInt; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_TEXTALIGN:  
-					unsignedInt = uint(parameterValue); 
-					formatTag.textAlign = unsignedInt; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_VERTEXDISTANCE:  
-					unsignedInt = uint(parameterValue); 
-					formatTag.vertexDistance = unsignedInt; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_FEATURES:  
-					var array:Array = parameterValue.split(/,\s*/g); 
-					var fontFeatures:HardwareFontFeatures = new HardwareFontFeatures(); 
-					 
-					unsignedInt = array.length; 
-					for (var i:uint = 0; i < unsignedInt; i++) 
-					{ 
-						var featureTag:FeatureTag = FeatureTag.getFeatureTag(array[i]); 
-						if (featureTag) 
-						{ 
-							fontFeatures.addFeature(featureTag); 
-						} 
-					} 
-					 
-					formatTag.features = fontFeatures; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_SCRIPT:  
-					var string:String = parameterValue; 
-					formatTag.scriptTag = string; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_LANGUAGE:  
-					string = parameterValue; 
-					formatTag.languageTag = string; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_FONT:  
-					string = parameterValue; 
-					formatTag.fontId = string; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_FORMATID:  
-					string = parameterValue; 
-					formatTag.formatId = string; 
-					 
-					break; 
-				 
-				case FormatTag.ATTRIBUTE_COLORID:  
-					string = parameterValue; 
-					formatTag.colorId = string; 
-					 
-					break; 
-					 
-				case FormatTag.ATTRIBUTE_SHEARX:  
-					number = Number(parameterValue); 
-					formatTag.shearX = number; 
-					 
-					break; 
-					 
-				case FormatTag.ATTRIBUTE_SHEARY:  
-					number = Number(parameterValue); 
-					formatTag.shearY = number; 
-					 
-					break; 
-			} 
+				case BoldTag.TAG: 
+					textTag = new BoldTag ();
+					break;
+				case FontTag.TAG: 
+					textTag = new FontTag ();
+					break;
+				case FormatTag.TAG: 
+					textTag = new FormatTag ();
+					break;
+				case ItalicTag.TAG: 
+					textTag = new ItalicTag ();
+					break;
+				case TextFormatTag.TAG: 
+					textTag = new TextFormatTag ();
+					break;
+				case UnderlineTag.TAG: 
+					textTag = new UnderlineTag ();
+					break;
+				default:
+					textTag = new UnknownTag ();
+					break;
+			}
+			
+			if (isEndTag)
+			{
+				textTag.id = TextTag.CLOSE;
+			}
+			else
+			{
+				textTag.id = isSelfTerminating ? TextTag.CLOSE : TextTag.OPEN;
+				textTag.parseAttributes ( tagParameters );
+			}
+			
+			return textTag;
 		} 
 	} 
 } 

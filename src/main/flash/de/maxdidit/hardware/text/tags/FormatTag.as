@@ -22,7 +22,13 @@ along with 'firetype'.  If not, see <http://www.gnu.org/licenses/>.
  
 package de.maxdidit.hardware.text.tags  
 { 
+	import de.maxdidit.hardware.font.data.tables.common.features.FeatureTag;
+	import de.maxdidit.hardware.font.HardwareFont;
+	import de.maxdidit.hardware.text.cache.HardwareCharacterCache;
 	import de.maxdidit.hardware.text.format.HardwareFontFeatures; 
+	import de.maxdidit.hardware.text.format.HardwareTextFormat;
+	import de.maxdidit.hardware.text.format.HardwareTextFormatListElement;
+	import de.maxdidit.list.LinkedList;
 	/** 
 	 * ... 
 	 * @author Max Knoblich 
@@ -46,6 +52,7 @@ package de.maxdidit.hardware.text.tags
 		static public const ATTRIBUTE_SCRIPT:String = "script"; 
 		static public const ATTRIBUTE_LANGUAGE:String = "language"; 
 		static public const ATTRIBUTE_FONT:String = "font"; 
+		
 		 
 		static public const ATTRIBUTE_SHEARX:String = "shearx"; 
 		static public const ATTRIBUTE_SHEARY:String = "sheary"; 
@@ -95,7 +102,7 @@ package de.maxdidit.hardware.text.tags
 		 
 		public function FormatTag()  
 		{ 
-			 
+			_triggerFontSwitch = true;
 		} 
 		 
 		/////////////////////// 
@@ -297,6 +304,199 @@ package de.maxdidit.hardware.text.tags
 		{ 
 			return _isShearYSet; 
 		} 
-		 
+		
+		protected override function parseAttribute( attributeName:String, attributeValue):void
+		{
+			
+			switch ( attributeName )
+			{
+				case FormatTag.ATTRIBUTE_SCALE: 
+					var number:Number = Number( attributeValue );
+					scale = number;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_COLOR: 
+					var unsignedInt:uint = uint( attributeValue );
+					color = unsignedInt;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_TEXTALIGN: 
+					unsignedInt = uint( attributeValue );
+					textAlign = unsignedInt;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_VERTEXDISTANCE: 
+					unsignedInt = uint( attributeValue );
+					vertexDistance = unsignedInt;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_FEATURES: 
+					var array:Array = attributeValue.split( /,\s*/g );
+					var fontFeatures:HardwareFontFeatures = new HardwareFontFeatures();
+					
+					unsignedInt = array.length;
+					for ( var i:uint = 0; i < unsignedInt; i++ )
+					{
+						var featureTag:FeatureTag = FeatureTag.getFeatureTag( array[ i ] );
+						if ( featureTag )
+						{
+							fontFeatures.addFeature( featureTag );
+						}
+					}
+					
+					features = fontFeatures;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_SCRIPT: 
+					var string:String = attributeValue;
+					scriptTag = string;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_LANGUAGE: 
+					string = attributeValue;
+					languageTag = string;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_FONT: 
+					string = attributeValue;
+					fontId = string;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_FORMATID: 
+					string = attributeValue;
+					formatId = string;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_COLORID: 
+					string = attributeValue;
+					colorId = string;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_SHEARX: 
+					number = Number( attributeValue );
+					shearX = number;
+					
+					break;
+				
+				case FormatTag.ATTRIBUTE_SHEARY: 
+					number = Number( attributeValue );
+					shearY = number;
+					
+					break;
+			}
+		}
+		
+		public override function processTag(fontStack:LinkedList, cache:HardwareCharacterCache, rawText:String, index:int):void
+		{
+			if (id == TextTag.CLOSE)
+			{
+				fontStack.removeElement( fontStack.lastElement );
+			}
+			else
+			{
+				
+				var parentFormat:HardwareTextFormat;
+				var newTextFormat:HardwareTextFormat;
+				if ( this.isFormatIdSet )
+				{
+					newTextFormat = cache.textFormatMap.getTextFormatById( this.formatId );
+					
+					if ( this.extendsReferencedFormat || !newTextFormat )
+					{
+						// create new text format with the referenced format as parent 
+						parentFormat = newTextFormat;
+						newTextFormat = new HardwareTextFormat( parentFormat );
+					}
+				}
+				else
+				{
+					parentFormat = ( fontStack.lastElement as HardwareTextFormatListElement ).hardwareTextFormat;
+					newTextFormat = new HardwareTextFormat( parentFormat );
+				}
+				
+				// pass on values 
+				if ( this.isColorIdSet )
+				{
+					if ( cache.textColorMap.hasTextColorId( this.colorId ) )
+					{
+						newTextFormat.textColor = cache.textColorMap.getTextColorById( this.colorId );
+					}
+				}
+				else if ( this.isColorSet )
+				{
+					newTextFormat.color = this.color;
+				}
+				
+				if ( !cache.textColorMap.hasTextColorId( newTextFormat.textColor.id ) )
+				{
+					cache.textColorMap.addTextColor( newTextFormat.textColor );
+				}
+				
+				if ( this.isScaleSet )
+				{
+					newTextFormat.scale = this.scale;
+				}
+				
+				if ( this.isTextAlignSet )
+				{
+					newTextFormat.textAlign = this.textAlign;
+				}
+				
+				if ( this.isVertexDistanceSet )
+				{
+					newTextFormat.vertexDistance = this.vertexDistance;
+				}
+				
+				if ( this.areFeaturesSet )
+				{
+					newTextFormat.features.copyFrom( this.features );
+				}
+				if ( parentFormat )
+				{
+					newTextFormat.features.parent = parentFormat.features;
+				}
+				
+				if ( this.isScriptTagSet )
+				{
+					newTextFormat.scriptTag = this.scriptTag;
+				}
+				
+				if ( this.isLanguageTagSet )
+				{
+					newTextFormat.languageTag = this.languageTag;
+				}
+				
+				if ( this.isFontIdSet )
+				{
+					if ( cache.fontMap.hasFontId( this.fontId ) )
+					{
+						var font:HardwareFont = cache.fontMap.getFontById( this.fontId );
+						newTextFormat.font = font;
+					}
+				}
+				
+				if ( this.isShearXSet )
+				{
+					newTextFormat.shearX = this.shearX;
+				}
+				
+				if ( this.isShearYSet )
+				{
+					newTextFormat.shearY = this.shearY;
+				}
+				
+				fontStack.addElement( new HardwareTextFormatListElement( newTextFormat ) );
+			}
+		}
 	} 
 } 

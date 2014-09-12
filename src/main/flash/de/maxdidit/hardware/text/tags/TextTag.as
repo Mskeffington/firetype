@@ -22,6 +22,8 @@ along with 'firetype'.  If not, see <http://www.gnu.org/licenses/>.
  
 package de.maxdidit.hardware.text.tags  
 { 
+	import de.maxdidit.hardware.text.cache.HardwareCharacterCache;
+	import de.maxdidit.list.LinkedList;
 	/** 
 	 * ... 
 	 * @author Max Knoblich 
@@ -32,15 +34,15 @@ package de.maxdidit.hardware.text.tags
 		// Constants 
 		/////////////////////// 
 		 
-		public static const ID_FORMAT:uint = 0; 
-		public static const ID_FORMAT_CLOSED:uint = 1; 
+		public static const OPEN:uint = 0; 
+		public static const CLOSE:uint = 1; 
 		 
 		/////////////////////// 
 		// Member Fields 
 		/////////////////////// 
 		 
 		private var _id:uint; 
-		 
+		protected var _triggerFontSwitch:Boolean = false;
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
@@ -53,7 +55,11 @@ package de.maxdidit.hardware.text.tags
 		/////////////////////// 
 		// Member Properties 
 		/////////////////////// 
-		 
+		public function get triggerFontSwitch ():Boolean
+		{
+			return _triggerFontSwitch;
+		}
+		
 		public function get id():uint  
 		{ 
 			return _id; 
@@ -63,6 +69,37 @@ package de.maxdidit.hardware.text.tags
 		{ 
 			_id = value; 
 		} 
-		 
+		
+		public function parseAttributes( tagAttributes:String ):void
+		{
+			var attributes:Array = tagAttributes.match( /([\w]+=["']?[-\w\s,.:]+["']?)/g );
+			const l:uint = attributes.length;
+			
+			for ( var i:uint = 0; i < l; i++ )
+			{
+				var tagAttribute:String = attributes[ i ];
+				var indexOfEqualSign:int = tagAttribute.indexOf( "=" );
+				if ( indexOfEqualSign == -1 )
+				{
+					continue;
+				}
+				
+				var attributeName:String = tagAttribute.substring( 0, indexOfEqualSign ).toLowerCase();
+				var attributeValue:String = tagAttribute.substr( indexOfEqualSign + 1 );
+				attributeValue = attributeValue.replace( /[(\\")']/g, "" );
+				
+				parseAttribute( attributeName, attributeValue );
+			}
+		}
+		
+		protected function parseAttribute( attributeName:String, attributeValue ):void
+		{
+			//Meant to be overwritten
+		}
+		
+		public function processTag (fontStack:LinkedList, cache:HardwareCharacterCache, rawText:String, index:int):void
+		{
+			//meant to be overwritten
+		}
 	} 
 } 
