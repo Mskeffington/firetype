@@ -46,7 +46,7 @@ package de.maxdidit.hardware.font.triangulation
 		// Member Functions 
 		/////////////////////// 
 		 
-		public function triangulatePath(path:Vector.<Vertex>, result:Vector.<uint>, indexOffset:uint):uint 
+		public function triangulatePath(path:Vector.<Vertex>, indexBuffer:Vector.<uint>, indexOffset:uint):uint
 		{ 
 			const l:uint = path.length; 
 			if (l == 0) 
@@ -104,7 +104,7 @@ package de.maxdidit.hardware.font.triangulation
 				} 
 				 
 				// add triangle to result 
-				result.push((currentIndex.previous as UnsignedIntegerListElement).value + indexOffset, currentIndex.value + indexOffset, (currentIndex.next as UnsignedIntegerListElement).value + indexOffset); 
+				indexBuffer.push((currentIndex.previous as UnsignedIntegerListElement).value + indexOffset, currentIndex.value + indexOffset, (currentIndex.next as UnsignedIntegerListElement).value + indexOffset); 
 				 
 				numTriangles++; 
 				 
@@ -116,9 +116,9 @@ package de.maxdidit.hardware.font.triangulation
 			} 
 			 
 			// add the last triangle 
-			result.push((currentIndex.previous as UnsignedIntegerListElement).value + indexOffset); 
-			result.push(currentIndex.value + indexOffset); 
-			result.push((currentIndex.next as UnsignedIntegerListElement).value + indexOffset); 
+			indexBuffer.push((currentIndex.previous as UnsignedIntegerListElement).value + indexOffset); 
+			indexBuffer.push(currentIndex.value + indexOffset); 
+			indexBuffer.push((currentIndex.next as UnsignedIntegerListElement).value + indexOffset); 
 			 
 			numTriangles++; 
 			 

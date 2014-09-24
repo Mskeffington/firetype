@@ -30,7 +30,7 @@ package de.maxdidit.hardware.font.triangulation
 	 */ 
 	public interface ITriangulator  
 	{ 
-		function triangulatePath(path:Vector.<Vertex>, result:Vector.<uint>, indexOffset:uint):uint 
+		function triangulatePath (path:Vector.<Vertex>, indexBuffer:Vector.<uint>, indexOffset:uint):uint;
 	} 
 	 
 } 

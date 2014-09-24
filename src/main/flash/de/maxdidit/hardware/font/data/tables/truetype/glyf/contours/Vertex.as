@@ -41,12 +41,13 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 		public var nY:Number; 
 		
 		public var index:int = 0;
-		 
+		
+		public var alpha:Number = 1;
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
 		 
-		public function Vertex($x:Number = 0, $y:Number = 0, $onCurve:Boolean = true)  
+		public function Vertex($x:Number = 0, $y:Number = 0, $onCurve:Boolean = true, $alpha:Number = 1)  
 		{ 
 			x = $x; 
 			y = $y; 
