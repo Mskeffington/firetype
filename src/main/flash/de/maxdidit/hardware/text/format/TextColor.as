@@ -83,7 +83,7 @@ package de.maxdidit.hardware.text.format
 			_color[2] = Number(value & 0xFF) / 255; // red 
 			_color[1] = Number((value >> 8) & 0xFF) / 255; // green 
 			_color[0] = Number((value >> 16) & 0xFF) / 255; // blue 
-			_color[3] = Number((value >> 24) & 0xFF) / 255; // alpha 
+			_color[3] = Number(0) / 255//Number((value >> 24) & 0xFF) / 255; // alpha 
 		} 
 		 
 		public function get colorVector():Vector.<Number> 
