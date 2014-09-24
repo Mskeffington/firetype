@@ -35,7 +35,6 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 		public var x:Number; 
 		public var y:Number; 
 		 
-		public var alpha:Number; 
 		public var onCurve:Boolean;
 		
 		public var nX:Number; 
@@ -47,12 +46,11 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 		// Constructor 
 		/////////////////////// 
 		 
-		public function Vertex ($x:Number = 0, $y:Number = 0, $onCurve:Boolean = true, $alpha:Number = 1 )  
+		public function Vertex($x:Number = 0, $y:Number = 0, $onCurve:Boolean = true)  
 		{ 
 			x = $x; 
 			y = $y; 
 			 
-			alpha = $alpha;
 			onCurve = $onCurve; 
 		} 
 		 
