@@ -58,25 +58,16 @@ package de.maxdidit.hardware.font.triangulation
 			var innerIndexOffset:uint = 0; 
 			var outerIndexOffset:uint = indexOffset; 
 			
-			var innerPath:Vector.<Vertex> = path.slice (0, innerIndexOffset - 1);
-			var outerPath:Vector.<Vertex> = path.slice (innerIndexOffset, path.length - 1);
+			var innerPath:Vector.<Vertex> = path.slice(0, indexOffset);
+			var outerPath:Vector.<Vertex> = path.slice (indexOffset, path.length);
 			
 			var thirdPointOuter:Boolean = true;
 			var numTriangles:uint = 0; 
 			
 			var vertexCIndex:int = 1;
 			
-			if (innerPath > outerPath)
-			{
-				var tempPath:Vector.<Vertex> = outerPath;
-				outerPath = innerPath;
-				innerPath = tempPath;
-				innerIndexOffset = outerIndexOffset;
-				outerIndexOffset = 0;
-			}
-			
-			var innerPointIndex:int = innerIndexOffset;
-			var outerPointIndex:int = outerIndexOffset;
+			var innerPointIndex:int = 0//innerIndexOffset;
+			var outerPointIndex:int = 0//outerIndexOffset;
 			
 			var vertexA:Vertex;
 			var vertexB:Vertex;
@@ -113,13 +104,13 @@ package de.maxdidit.hardware.font.triangulation
 					}
 					vertexC = innerPath[vertexCIndex];
 				}
-				if (!innerComplete && !outerComplete)
-				{
+				
 				// add triangle to result 
-				indexBuffer.push (innerPointIndex + indexBufferOffset, outerPointIndex + indexBufferOffset, vertexCIndex + indexBufferOffset);
-				 
+				indexBuffer.push (	innerPointIndex + innerIndexOffset + indexBufferOffset, 
+									outerPointIndex + outerIndexOffset + indexBufferOffset, 
+									vertexCIndex + (thirdPointOuter == true ? outerIndexOffset : innerIndexOffset) + indexBufferOffset);
 				numTriangles++; 
-			}
+				
 				//next set?
 				if (thirdPointOuter)
 				{

@@ -73,8 +73,9 @@ package de.maxdidit.hardware.text.renderer
 		
 		override protected function get vertexShaderCode():String
 		{
-			return "mov vt0.rgb, vc[va1.x].rgb\n" + //
-			"mov vt0.a, va2\n" + //
+			return "mov vt0, vc[va1.x]\n" + //
+			//"mov vt0.a, va2\n" + //
+			"mov v1, va2\n" + //"
 			"mov v0, vt0\n" + //
 			"m44 op, va0, vc0";
 		}
@@ -82,7 +83,10 @@ package de.maxdidit.hardware.text.renderer
 		override protected function get fragmentShaderCode():String
 		{
 			//transform v0.alpha by (distance from the edge / thickness of border)
-			return "mov oc, v0";
+			//return "mov oc, v0";
+			return "mov ft0, v0\n" +//
+			"mov ft0.a, v1.x\n" +//
+			"mov oc, ft0";
 		}
 		
 		/////////////////////// 
@@ -106,7 +110,7 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = vertex.y;
 				_vertexData[index++] = 0;
 				_vertexData[index++] = 4 //+ vertex.index;
-				_vertexData[index++] = vertex.alpha;
+				_vertexData[index++] = 1- vertex.alpha;
 				//trace ("abc "+vertex.alpha);
 			}
 		}
@@ -116,7 +120,7 @@ package de.maxdidit.hardware.text.renderer
 			updateBuffers();
 			
 			var fallbackTextColor:TextColor = new TextColor();
-			var textColor:TextColor;// = textColor;
+			var textColor:TextColor = textColor;
 			_context3d.setProgram(programPair);
 			
 			_context3d.setVertexBufferAt(0, _vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);

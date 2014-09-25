@@ -16,7 +16,7 @@ package de.maxdidit.hardware.text.glyphbuilders
 		// Member Fields
 		///////////////////////
 		
-		private var _outlineThickness:Number = 50;
+		private var _outlineThickness:Number = 30;
 		private var _pathConnector:PathConnector;
 		private var _innerOuterTriangulator:ITriangulator;
 		
@@ -38,9 +38,6 @@ package de.maxdidit.hardware.text.glyphbuilders
 		override public function buildGlyph(paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>):HardwareGlyph
 		{
 			var result:HardwareGlyph = super.buildGlyph(paths, originalPaths);
-			//var result:HardwareGlyph = new HardwareGlyph();
-			//result.vertices = new Vector.<Vertex>();
-			//result.indices = new Vector.<uint>();
 			
 			const pl:uint = originalPaths.length;
 			for (var i:uint = 0; i < pl; i++)
@@ -55,7 +52,6 @@ package de.maxdidit.hardware.text.glyphbuilders
 		
 		private function buildOutline(result:HardwareGlyph, path:Vector.<Vertex>):void
 		{
-			//return;
 			var outlineBase:Vector.<Vertex> = new Vector.<Vertex>();
 			var outlineVertices:Vector.<Vertex> = new Vector.<Vertex>();
 			var minDistanceIndices:Vector.<uint> = new Vector.<uint>();
@@ -78,9 +74,6 @@ package de.maxdidit.hardware.text.glyphbuilders
 				vertexB.nX = -vertexA.nX;
 				vertexB.nY = -vertexA.nY;
 				
-				
-				vertexB.alpha = 0;
-				
 				outlineBase[l - 1 - i] = vertexB;
 			}
 			
@@ -95,8 +88,6 @@ package de.maxdidit.hardware.text.glyphbuilders
 				vertexB.nX = vertexA.nX;
 				vertexB.nY = vertexA.nY;
 				
-				vertexB.alpha = 1;
-				vertexB.index = 1;
 				outlineVertices[i] = vertexB;
 				
 			}
@@ -116,27 +107,42 @@ package de.maxdidit.hardware.text.glyphbuilders
 			var origLen:int;
 			
 			// connect outlines
-			if (sumCrossProduct < 0)
-			{
+			//if (sumCrossProduct < 0)
+			//{
 				len = origLen = outlineVertices.length;
 				outlineVertices.length += outlineBase.length;
+				//set alpha
+				for (i = 0; i < len ; i++)
+				{
+					outlineVertices[i].alpha = 0;
+				}
+				
 				for (i = outlineBase.length - 1; i >= 0 ; i--)
 				{
+					outlineBase[i].alpha = 1;
 					outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
 				}
-			}
+			/*}
 			else
 			{
 				len = origLen = outlineBase.length;
 				outlineBase.length += outlineVertices.length;
+				//set alpha
+				for (i = 0; i < len ; i++)
+				{
+					outlineBase[i].alpha = 0;
+				}
+				//combine the vertex buffers
 				for (i = outlineVertices.length - 1; i >= 0 ; i--)
 				{
+					outlineVertices[i].alpha = 1;
 					outlineBase[len + (outlineVertices.length -i - 1)] = outlineVertices[i];
 				}
 				outlineVertices = outlineBase;
-			}
+			}*/
+			
 			(_innerOuterTriangulator as InnerOuterTriangulator).indexBufferOffset = result.vertices.length;
-			_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, origLen + 1);
+			_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, origLen );
 			
 			// copy outline vertices
 			l = outlineVertices.length;
