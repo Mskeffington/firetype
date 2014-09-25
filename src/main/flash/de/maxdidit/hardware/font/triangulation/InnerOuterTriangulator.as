@@ -84,7 +84,7 @@ package de.maxdidit.hardware.font.triangulation
 			
 			var innerComplete:Boolean = false;
 			var outerComplete:Boolean = false;
-			var index:int = 0;
+			
 			while (!innerComplete || !outerComplete)
 			{
 				vertexA = innerPath[innerPointIndex];
@@ -99,7 +99,6 @@ package de.maxdidit.hardware.font.triangulation
 					{
 						vertexCIndex = 0;
 						outerComplete = true;
-						trace("outer complete")
 					}
 					vertexC = outerPath[vertexCIndex];
 					
@@ -111,16 +110,16 @@ package de.maxdidit.hardware.font.triangulation
 					{
 						vertexCIndex = 0;
 						innerComplete = true;
-						trace("inner complete")
 					}
 					vertexC = innerPath[vertexCIndex];
 				}
-				
+				if (!innerComplete && !outerComplete)
+				{
 				// add triangle to result 
-				indexBuffer.push (innerPointIndex, outerPointIndex, vertexCIndex);
+				indexBuffer.push (innerPointIndex + indexBufferOffset, outerPointIndex + indexBufferOffset, vertexCIndex + indexBufferOffset);
 				 
 				numTriangles++; 
-				
+			}
 				//next set?
 				if (thirdPointOuter)
 				{
@@ -130,7 +129,6 @@ package de.maxdidit.hardware.font.triangulation
 				{
 					innerPointIndex = vertexCIndex;
 				}
-				index ++;
 				
 			}
 			 
@@ -156,47 +154,6 @@ package de.maxdidit.hardware.font.triangulation
 			
 			return (topDistance < bottomDistance);
 		}
-		/*
-		private function findNextClosestVertexPair (innerIndex:int, outerIndex:int, innerPath:Vector.<Vertex>, outerPath:Vector.<Vertex>):VertexPair
-		{
-			var vertexA:Vertex = innerPath[innerIndex];
-			var vertexB:Vertex = outerPath[outerIndex];
-			var currentDistance:Number = var nextDistance:Number = distanceBetweenPoints (vertexA, vertexB);
-			var tempVertex:Vertex = vertexB;
-			var currentOuterIndex:int = outerIndex;
-			var currentInnerIndex:int = innerIndex;
-			
-			while (nextDistance <= currentDistance)
-			{
-				vertexB = tempVertex;
-				
-				currentOuterIndex++;
-				tmpVertex = outerPath[currentOuterIndex];
-				nextDistance = distanceBetweenPoints (vertexA, tmpVertex);
-			}
-			
-			//couldnt find a closer point in the outer path so lets reset and try looking 
-			//for the next closest point in the inner path
-			if (vertexB == tmpVertexB)
-			{
-				//reset our state
-				currentInnerIndex = innerIndex;
-				currentOuterIndex = outerIndex;
-				nextDistance = currentDistance;
-				tempVertex = vertexA;
-				
-				while (nextDistance <= currentDistance)
-				{
-					vertexA = tempVertex;
-					
-					currentInnerIndex++;
-					tmpVertex = innerPath[currentInnerIndex];
-					nextDistance = distanceBetweenPoints (tmpVertex, vertexB);
-				}
-			}
-			
-			
-			return new VertexPair (vertexA, vertexB);
-		}*/
+		
 	} 
 } 

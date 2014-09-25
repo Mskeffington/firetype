@@ -75,10 +75,6 @@ package de.maxdidit.hardware.text.renderer
 		{
 			return "mov vt0.rgb, vc[va1.x].rgb\n" + //
 			"mov vt0.a, va2\n" + //
-			//"sub vt0.a, vt0.a, vt0.a\n" + //
-			//"add vt1, va2, vt0\n" + //
-			//"add vt1, vt1, vt0\n" + //
-			//"mov v0, vt1\n" + //
 			"mov v0, vt0\n" + //
 			"m44 op, va0, vc0";
 		}
@@ -86,9 +82,6 @@ package de.maxdidit.hardware.text.renderer
 		override protected function get fragmentShaderCode():String
 		{
 			//transform v0.alpha by (distance from the edge / thickness of border)
-			/*return "mov ft0, v0\n" + //
-			"mov ft0.a, v1.x\n" + //
-			"mov oc, ft0";*/
 			return "mov oc, v0";
 		}
 		
@@ -113,13 +106,8 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = vertex.y;
 				_vertexData[index++] = 0;
 				_vertexData[index++] = 4 //+ vertex.index;
-				//trace (vertex.index);
-				//trace (vertex.onCurve);
-				/*_vertexData[index++] = 0;
-				_vertexData[index++] = 0;
-				_vertexData[index++] = 0;
-				trace(vertex.alpha)*/
-				_vertexData[index++] = vertex.alpha//vertex.onCurve ? 0 : .5;
+				_vertexData[index++] = vertex.alpha;
+				//trace ("abc "+vertex.alpha);
 			}
 		}
 		

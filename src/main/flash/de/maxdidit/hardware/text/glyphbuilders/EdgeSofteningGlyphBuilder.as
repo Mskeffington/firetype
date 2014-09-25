@@ -16,7 +16,7 @@ package de.maxdidit.hardware.text.glyphbuilders
 		// Member Fields
 		///////////////////////
 		
-		private var _outlineThickness:Number = 150;
+		private var _outlineThickness:Number = 50;
 		private var _pathConnector:PathConnector;
 		private var _innerOuterTriangulator:ITriangulator;
 		
@@ -100,8 +100,9 @@ package de.maxdidit.hardware.text.glyphbuilders
 				outlineVertices[i] = vertexB;
 				
 			}
+			
 			var distanceProgress:Number = 0;
-			var blurThickness:int = _outlineThickness// / result.
+			var blurThickness:int = _outlineThickness;
 			while (distanceProgress < blurThickness)
 			{
 				var minDistance:Number = calculateMinDistance(blurThickness - distanceProgress, outlineVertices, minDistanceIndices);
@@ -111,32 +112,31 @@ package de.maxdidit.hardware.text.glyphbuilders
 				distanceProgress += minDistance;
 			}
 			
-			for (i = 0; i < outlineBase.length; i++)
-			{
-				outlineBase[i].alpha = 99;
-			}
-			for (i = 0; i < outlineVertices.length; i++)
-			{
-				outlineVertices[i].alpha = 66;
-			}
+			var len:int;
+			var origLen:int;
 			
 			// connect outlines
 			if (sumCrossProduct < 0)
 			{
-				
-				_pathConnector.connectPaths(outlineVertices, outlineBase);
-				//_innerOuterTriangulator.triangulatePath(outlineVertices, result.indices, result.vertices.length);
-				//triangulator.triangulatePath(outlineVertices, result.indices, result.vertices.length);
+				len = origLen = outlineVertices.length;
+				outlineVertices.length += outlineBase.length;
+				for (i = outlineBase.length - 1; i >= 0 ; i--)
+				{
+					outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
+				}
 			}
 			else
 			{
-				_pathConnector.connectPaths(outlineBase, outlineVertices);
-				//_innerOuterTriangulator.triangulatePath(outlineBase, result.indices, result.vertices.length);
-				//triangulator.triangulatePath(outlineBase, result.indices, result.vertices.length);
+				len = origLen = outlineBase.length;
+				outlineBase.length += outlineVertices.length;
+				for (i = outlineVertices.length - 1; i >= 0 ; i--)
+				{
+					outlineBase[len + (outlineVertices.length -i - 1)] = outlineVertices[i];
+				}
 				outlineVertices = outlineBase;
 			}
 			(_innerOuterTriangulator as InnerOuterTriangulator).indexBufferOffset = result.vertices.length;
-			//_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, a);// result.vertices.length - l);
+			_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, origLen + 1);
 			
 			// copy outline vertices
 			l = outlineVertices.length;
@@ -145,13 +145,8 @@ package de.maxdidit.hardware.text.glyphbuilders
 			var prespliceLength:int = k;
 			for (i = 0; i < l; i++)
 			{
-				trace(outlineVertices[i].alpha)
-				outlineVertices[i].alpha = i % 2;
-				
 				result.vertices[k++] = outlineVertices[i];
-				
 			}
-			_innerOuterTriangulator.triangulatePath (result.vertices, result.indices, prespliceLength + 1);
 			
 			
 		}
