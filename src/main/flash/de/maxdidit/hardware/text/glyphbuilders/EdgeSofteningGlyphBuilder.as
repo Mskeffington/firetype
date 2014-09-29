@@ -107,39 +107,19 @@ package de.maxdidit.hardware.text.glyphbuilders
 			var origLen:int;
 			
 			// connect outlines
-			//if (sumCrossProduct < 0)
-			//{
-				len = origLen = outlineVertices.length;
-				outlineVertices.length += outlineBase.length;
-				//set alpha
-				for (i = 0; i < len ; i++)
-				{
-					outlineVertices[i].alpha = 0;
-				}
-				
-				for (i = outlineBase.length - 1; i >= 0 ; i--)
-				{
-					outlineBase[i].alpha = 1;
-					outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
-				}
-			/*}
-			else
+			len = origLen = outlineVertices.length;
+			outlineVertices.length += outlineBase.length;
+			//set alpha
+			for (i = 0; i < len ; i++)
 			{
-				len = origLen = outlineBase.length;
-				outlineBase.length += outlineVertices.length;
-				//set alpha
-				for (i = 0; i < len ; i++)
-				{
-					outlineBase[i].alpha = 0;
-				}
-				//combine the vertex buffers
-				for (i = outlineVertices.length - 1; i >= 0 ; i--)
-				{
-					outlineVertices[i].alpha = 1;
-					outlineBase[len + (outlineVertices.length -i - 1)] = outlineVertices[i];
-				}
-				outlineVertices = outlineBase;
-			}*/
+				outlineVertices[i].alpha = 0;
+			}
+			
+			for (i = outlineBase.length - 1; i >= 0 ; i--)
+			{
+				outlineBase[i].alpha = 1;
+				outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
+			}
 			
 			(_innerOuterTriangulator as InnerOuterTriangulator).indexBufferOffset = result.vertices.length;
 			_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, origLen );

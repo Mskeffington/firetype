@@ -33,11 +33,13 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.font.triangulation.ITriangulator;
 	import de.maxdidit.hardware.text.components.HardwareGlyphInstance;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
+	import starling.utils.VertexData;
 	
 	/** 
 	 * ... 
@@ -67,27 +69,21 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		
 		override protected function get fieldsPerVertex():uint
-		{
-			return 5;
-		}
-		
-		override protected function get vertexShaderCode():String
-		{
-			return "mov vt0, vc[va1.x]\n" + //
-			//"mov vt0.a, va2\n" + //
-			"mov v1, va2\n" + //"
-			"mov v0, vt0\n" + //
-			"m44 op, va0, vc0";
-		}
-		
-		override protected function get fragmentShaderCode():String
-		{
-			//transform v0.alpha by (distance from the edge / thickness of border)
-			//return "mov oc, v0";
-			return "mov ft0, v0\n" +//
-			"mov ft0.a, v1.x\n" +//
-			"mov oc, ft0";
-		}
+ 		{
+			return 7;
+ 		}
+ 		
+ 		override protected function get vertexShaderCode():String
+ 		{
+			return	"m44 op, va0, vc0 \n" + // 4x4 matrix transform to output space
+			"mul v0, vc4, va1 \n";  // multiply color with alpha and pass it to fragment shader
+ 		}
+ 		
+ 		override protected function get fragmentShaderCode():String
+ 		{
+ 			//transform v0.alpha by (distance from the edge / thickness of border)
+			return "mov oc, v0";
+ 		}
 		
 		/////////////////////// 
 		// Member Functions 
@@ -109,9 +105,10 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = vertex.x;
 				_vertexData[index++] = vertex.y;
 				_vertexData[index++] = 0;
-				_vertexData[index++] = 4 //+ vertex.index;
-				_vertexData[index++] = 1- vertex.alpha;
-				//trace ("abc "+vertex.alpha);
+				_vertexData[index++] = 1; //r
+				_vertexData[index++] = 1; //g
+				_vertexData[index++] = 1; //b
+				_vertexData[index++] = vertex.alpha;
 			}
 		}
 		
@@ -121,12 +118,13 @@ package de.maxdidit.hardware.text.renderer
 			
 			var fallbackTextColor:TextColor = new TextColor();
 			var textColor:TextColor = textColor;
+			
 			_context3d.setProgram(programPair);
+			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA)
 			
-			_context3d.setVertexBufferAt(0, _vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-			_context3d.setVertexBufferAt(1, _vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);
-			_context3d.setVertexBufferAt(2, _vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_1);
-			
+			_context3d.setVertexBufferAt(0, _vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
+			_context3d.setVertexBufferAt(1, _vertexBuffer, VertexData.COLOR_OFFSET + 1/*for z*/, Context3DVertexBufferFormat.FLOAT_4);
+
 			for each (var font:Object in instanceMap)
 			{
 				for each (var vertexDistance:Object in font)
@@ -143,7 +141,7 @@ package de.maxdidit.hardware.text.renderer
 						{
 							textColor = fallbackTextColor;
 						}
-						
+						textColor.alpha = 1;
 						_context3d.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 4, textColor.colorVector, 1);
 						
 						for each (var instances:Vector.<HardwareGlyphInstance>in color)

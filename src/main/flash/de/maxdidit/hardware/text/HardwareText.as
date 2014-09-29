@@ -291,8 +291,9 @@ package de.maxdidit.hardware.text
 		{
 			loseAllChildren();
 			
-			var textSpans:Vector.<TextSpan> = _typesetter.createTextSpans(_text, _standardFormat, _cache);
-			_layout.layout(this, textSpans);
+			var textSpans:Vector.<TextSpan> = _typesetter.createTextSpans (_text, _standardFormat, _cache);
+			if(textSpans.length > 0)
+				_layout.layout(this, textSpans);
 		}
 		
 		override public function loseAllChildren():void

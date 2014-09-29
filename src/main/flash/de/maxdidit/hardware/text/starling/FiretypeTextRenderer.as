@@ -50,9 +50,9 @@ package de.maxdidit.hardware.text.starling
 		protected var _textObjectArr:Array;
 		protected var _maxControlWidth:Number;
 		
-		public function FiretypeTextRenderer()
+		public function FiretypeTextRenderer(cache:HardwareCharacterCache = null)
 		{
-			super (null);
+			super (cache);
 			//this.font = FiretypeFontLoader.getFont ();
 			//this.vertexDistance = 30;
 		}
@@ -196,7 +196,7 @@ package de.maxdidit.hardware.text.starling
 		}
 		public function set textFormat(value:TextFormat):void 
 		{
-			this.color = uint(value.color);
+			this.color = uint(value.color) + 0xFF << 8;
 			this.textScale = int (value.size) / 50;
 			_horizontalAlign = value.align;
 			_font = value.font;
