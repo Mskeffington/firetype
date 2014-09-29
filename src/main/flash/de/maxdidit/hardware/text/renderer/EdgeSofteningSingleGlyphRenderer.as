@@ -38,7 +38,6 @@ package de.maxdidit.hardware.text.renderer
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
-	import starling.utils.VertexData;
 	
 	/** 
 	 * ... 
@@ -69,28 +68,25 @@ package de.maxdidit.hardware.text.renderer
 		
 		override protected function get fieldsPerVertex():uint
 		{
-			return 7;
+			return 5;
 		}
 		
 		override protected function get vertexShaderCode():String
 		{
-			/*return "mov vt0, vc[va1.x]\n" + //
+			return "mov vt0, vc[va1.x]\n" + //
 			//"mov vt0.a, va2\n" + //
 			"mov v1, va2\n" + //"
 			"mov v0, vt0\n" + //
-			"m44 op, va0, vc0";*/
-			return	"m44 op, va0, vc0 \n" + // 4x4 matrix transform to output space
-			//"mov v0, vc3\n";
-			"mul v0, vc4, va1 \n";  // multiply color with alpha and pass it to fragment shader
+			"m44 op, va0, vc0";
 		}
 		
 		override protected function get fragmentShaderCode():String
 		{
 			//transform v0.alpha by (distance from the edge / thickness of border)
-			return "mov oc, v0";
-			/*return "mov ft0, v0\n" +//
+			//return "mov oc, v0";
+			return "mov ft0, v0\n" +//
 			"mov ft0.a, v1.x\n" +//
-			"mov oc, ft0";*/
+			"mov oc, ft0";
 		}
 		
 		/////////////////////// 
@@ -113,12 +109,9 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = vertex.x;
 				_vertexData[index++] = vertex.y;
 				_vertexData[index++] = 0;
-				_vertexData[index++] = 1; //r
-				_vertexData[index++] = 1; //g
-				_vertexData[index++] = 1; //b
-				_vertexData[index++] = vertex.alpha;
-				trace(vertex.x + "," + vertex.y + ",")
-				trace(vertex.alpha)
+				_vertexData[index++] = 4 //+ vertex.index;
+				_vertexData[index++] = 1- vertex.alpha;
+				//trace ("abc "+vertex.alpha);
 			}
 		}
 		
@@ -130,15 +123,10 @@ package de.maxdidit.hardware.text.renderer
 			var textColor:TextColor = textColor;
 			_context3d.setProgram(programPair);
 			
-			_context3d.setVertexBufferAt(0, _vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
-			_context3d.setVertexBufferAt(1, _vertexBuffer, VertexData.COLOR_OFFSET + 1/*for z*/, Context3DVertexBufferFormat.FLOAT_4);
+			_context3d.setVertexBufferAt(0, _vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+			_context3d.setVertexBufferAt(1, _vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);
+			_context3d.setVertexBufferAt(2, _vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_1);
 			
-			
-/*			context.setVertexBufferAt(0, mVertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_2); 
-			context.setVertexBufferAt(1, mVertexBuffer, VertexData.COLOR_OFFSET,    Context3DVertexBufferFormat.FLOAT_4);
-			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, support.mvpMatrix3D, true);            
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 4, alphaVector, 1);
-*/			
 			for each (var font:Object in instanceMap)
 			{
 				for each (var vertexDistance:Object in font)

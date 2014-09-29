@@ -16,7 +16,8 @@ package de.maxdidit.hardware.text.glyphbuilders
 		// Member Fields
 		///////////////////////
 		
-		private var _antiAliasThickness:Number = 30;
+		private var _outlineThickness:Number = 30;
+		private var _pathConnector:PathConnector;
 		private var _innerOuterTriangulator:ITriangulator;
 		
 		///////////////////////
@@ -26,6 +27,7 @@ package de.maxdidit.hardware.text.glyphbuilders
 		public function EdgeSofteningGlyphBuilder(triangulator:ITriangulator)
 		{
 			super(triangulator);
+			_pathConnector = new PathConnector ();
 			_innerOuterTriangulator = new InnerOuterTriangulator ();
 		}
 		
@@ -50,15 +52,33 @@ package de.maxdidit.hardware.text.glyphbuilders
 		
 		private function buildOutline(result:HardwareGlyph, path:Vector.<Vertex>):void
 		{
+			var outlineBase:Vector.<Vertex> = new Vector.<Vertex>();
 			var outlineVertices:Vector.<Vertex> = new Vector.<Vertex>();
 			var minDistanceIndices:Vector.<uint> = new Vector.<uint>();
 			var vertexA:Vertex;
 			var vertexB:Vertex;
 			var l:uint = path.length;
-			var distanceProgress:Number = 0;
-			var i:int = 0;
+			
+			//copy original vertices into outlineVertices
+			var sumCrossProduct:Number = 0;
+			outlineBase.length = l;
+			for (var i:int = 0; i < l; i++)
+			{
+				vertexA = path[i];
+				vertexB = path[(i + 1) % l];
+				
+				sumCrossProduct += vertexA.nX * vertexB.nY - vertexA.nY * vertexB.nX;
+				
+				vertexB = new Vertex(vertexA.x, vertexA.y);
+				
+				vertexB.nX = -vertexA.nX;
+				vertexB.nY = -vertexA.nY;
+				
+				outlineBase[l - 1 - i] = vertexB;
+			}
 			
 			outlineVertices.length = l;
+			
 			for (i = 0; i < l; i++)
 			{
 				vertexA = path[i];
@@ -72,15 +92,57 @@ package de.maxdidit.hardware.text.glyphbuilders
 				
 			}
 			
-			distanceProgress = 0;
-			while (distanceProgress < _antiAliasThickness)
+			var distanceProgress:Number = 0;
+			var blurThickness:int = _outlineThickness;
+			while (distanceProgress < blurThickness)
 			{
-				var minDistance:Number = calculateMinDistance(_antiAliasThickness - distanceProgress, outlineVertices, minDistanceIndices);
+				var minDistance:Number = calculateMinDistance(blurThickness - distanceProgress, outlineVertices, minDistanceIndices);
 				outlineVertices = insetVertices(minDistance, outlineVertices);
 				outlineVertices = createNextVertexLayer(minDistance, outlineVertices, minDistanceIndices);
 				
 				distanceProgress += minDistance;
 			}
+			
+			var len:int;
+			var origLen:int;
+			
+			// connect outlines
+			//if (sumCrossProduct < 0)
+			//{
+				len = origLen = outlineVertices.length;
+				outlineVertices.length += outlineBase.length;
+				//set alpha
+				for (i = 0; i < len ; i++)
+				{
+					outlineVertices[i].alpha = 0;
+				}
+				
+				for (i = outlineBase.length - 1; i >= 0 ; i--)
+				{
+					outlineBase[i].alpha = 1;
+					outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
+				}
+			/*}
+			else
+			{
+				len = origLen = outlineBase.length;
+				outlineBase.length += outlineVertices.length;
+				//set alpha
+				for (i = 0; i < len ; i++)
+				{
+					outlineBase[i].alpha = 0;
+				}
+				//combine the vertex buffers
+				for (i = outlineVertices.length - 1; i >= 0 ; i--)
+				{
+					outlineVertices[i].alpha = 1;
+					outlineBase[len + (outlineVertices.length -i - 1)] = outlineVertices[i];
+				}
+				outlineVertices = outlineBase;
+			}*/
+			
+			(_innerOuterTriangulator as InnerOuterTriangulator).indexBufferOffset = result.vertices.length;
+			_innerOuterTriangulator.triangulatePath (outlineVertices, result.indices, origLen );
 			
 			// copy outline vertices
 			l = outlineVertices.length;
@@ -90,10 +152,8 @@ package de.maxdidit.hardware.text.glyphbuilders
 			for (i = 0; i < l; i++)
 			{
 				result.vertices[k++] = outlineVertices[i];
-				outlineVertices[i].alpha = 0;
 			}
 			
-			_innerOuterTriangulator.triangulatePath (result.vertices, result.indices, prespliceLength );
 			
 		}
 		

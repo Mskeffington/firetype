@@ -40,7 +40,7 @@ package de.maxdidit.hardware.font.triangulation
 		{ 
 		 
 		} 
-		//public var indexBufferOffset:int = 0;
+		public var indexBufferOffset:int = 0;
 		/////////////////////// 
 		// Member Functions 
 		/////////////////////// 
@@ -65,10 +65,9 @@ package de.maxdidit.hardware.font.triangulation
 			var numTriangles:uint = 0; 
 			
 			var vertexCIndex:int = 1;
-			var vertexCOffset:int = 0;
 			
-			var innerPointIndex:int = 0;
-			var outerPointIndex:int = 0;
+			var innerPointIndex:int = 0//innerIndexOffset;
+			var outerPointIndex:int = 0//outerIndexOffset;
 			
 			var vertexA:Vertex;
 			var vertexB:Vertex;
@@ -93,7 +92,7 @@ package de.maxdidit.hardware.font.triangulation
 						outerComplete = true;
 					}
 					vertexC = outerPath[vertexCIndex];
-					vertexCOffset = outerIndexOffset;
+					
 				}
 				else
 				{
@@ -104,13 +103,12 @@ package de.maxdidit.hardware.font.triangulation
 						innerComplete = true;
 					}
 					vertexC = innerPath[vertexCIndex];
-					vertexCOffset = innerIndexOffset;
 				}
 				
 				// add triangle to result 
-				indexBuffer.push (	innerPointIndex + innerIndexOffset, 
-									outerPointIndex + outerIndexOffset, 
-									vertexCIndex + vertexCOffset);
+				indexBuffer.push (	innerPointIndex + innerIndexOffset + indexBufferOffset, 
+									outerPointIndex + outerIndexOffset + indexBufferOffset, 
+									vertexCIndex + (thirdPointOuter == true ? outerIndexOffset : innerIndexOffset) + indexBufferOffset);
 				numTriangles++; 
 				
 				//next set?
