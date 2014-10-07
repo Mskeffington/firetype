@@ -134,6 +134,8 @@ package de.maxdidit.hardware.text.components
 		public function set glyph(value:Glyph):void  
 		{ 
 			_glyph = value; 
+			_glyph.charCode = _charCode;
+			//_charCode = _glyph.charCode;
 		} 
 		 
 		public function get charCode():uint  

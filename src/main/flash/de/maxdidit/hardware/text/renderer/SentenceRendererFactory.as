@@ -30,7 +30,7 @@ package de.maxdidit.hardware.text.renderer
 	 * ... 
 	 * @author Michael Skeffington
 	 */ 
-	public class EdgeSofteningSingleGlyphRendererFactory implements IHardwareTextRendererFactory 
+	public class SentenceRendererFactory implements IHardwareTextRendererFactory 
 	{ 
 		/////////////////////// 
 		// Member Fields 
@@ -42,7 +42,7 @@ package de.maxdidit.hardware.text.renderer
 		// Constructor 
 		/////////////////////// 
 		 
-		public function EdgeSofteningSingleGlyphRendererFactory(context3d:Context3D)  
+		public function SentenceRendererFactory(context3d:Context3D)  
 		{ 
 			this.context3d = context3d; 
 		} 
@@ -55,7 +55,7 @@ package de.maxdidit.hardware.text.renderer
 		 
 		public function retrieveHardwareTextRenderer():IHardwareTextRenderer  
 		{ 
-			var renderer:EdgeSofteningSingleGlyphRenderer = new EdgeSofteningSingleGlyphRenderer(context3d); 
+			var renderer:SentenceRenderer = new SentenceRenderer(context3d); 
 			return renderer; 
 		} 
 		 

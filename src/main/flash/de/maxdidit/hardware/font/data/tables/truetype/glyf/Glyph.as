@@ -53,6 +53,8 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf
 		private var _lookupMap:Vector.<Vector.<Vector.<IGlyphLookup>>>; 
 		
 		private var _font:HardwareFont;
+		private var _charCode:uint = 0x00;
+
 		 
 		/////////////////////// 
 		// Constructor 
@@ -118,6 +120,17 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf
 		{
 			_font = value;
 		}
+		
+		public function get charCode():uint 
+		{
+			return _charCode;
+		}
+		
+		public function set charCode(value:uint):void 
+		{
+			_charCode = value;
+		}
+		
 		 
 		/////////////////////// 
 		// Member Functions 
@@ -224,6 +237,6 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf
 			} 
 		 
 		} 
-	 
+	
 	} 
 } 

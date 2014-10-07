@@ -88,6 +88,7 @@ package de.maxdidit.hardware.text.components
 		 
 		private var _hardwareGlyph:HardwareGlyph; 
 		private var _glyph:Glyph; 
+		private var _characterCode:int = 0x00;
 		 
 		/////////////////////// 
 		// Constructor 
@@ -123,6 +124,17 @@ package de.maxdidit.hardware.text.components
 		{ 
 			_glyph = value; 
 		} 
+		
+		public function get characterCode():int 
+		{
+			return _characterCode;
+		}
+		
+		public function set characterCode(value:int):void 
+		{
+			_characterCode = value;
+		}
+		
 		 
 		/////////////////////// 
 		// Member Functions 

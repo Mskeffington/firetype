@@ -129,13 +129,14 @@ package de.maxdidit.hardware.text.cache
 		// Member Functions 
 		/////////////////////// 
 		
-		private function addPathsToSection(paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>):HardwareGlyph
+		private function addPathsToSection(charCode:uint, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>):HardwareGlyph
 		{
 			var result:HardwareGlyph;
 			var section:HardwareCharacterCacheSection;
 			
 			// create hardware glyph
 			result = _glyphBuilder.buildGlyph(paths, originalPaths);
+			result.charCode = charCode;
 			
 			// insert into section 
 			const l:uint = _sections.length;
@@ -202,7 +203,7 @@ package de.maxdidit.hardware.text.cache
 					var originalPaths:Vector.<Vector.<Vertex>> = new Vector.<Vector.<Vertex>>();
 					
 					glyphInstance.glyph.retrievePaths(vertexDistance, paths, originalPaths);
-					addPathsAsHardwareGlyph(paths, originalPaths, font, vertexDistance, glyphInstance.glyph.header.index);		
+					addPathsAsHardwareGlyph(glyphInstance.characterCode, paths, originalPaths, font, vertexDistance, glyphInstance.glyph.header.index);		
 				}
 			}
 		}
@@ -212,7 +213,8 @@ package de.maxdidit.hardware.text.cache
 			const cl:uint = _clientTexts.length;
 			for (var i:uint = 0; i < cl; i++)
 			{
-				_clientTexts[i].update();
+				_clientTexts[i].update ();
+				//_clientTexts[i].ren
 			}
 			
 			const l:uint = _sections.length;
@@ -274,9 +276,9 @@ package de.maxdidit.hardware.text.cache
 			return hardwareGlyph;
 		}
 		
-		public function addPathsAsHardwareGlyph(paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>, font:HardwareFont, vertexDistance:Number, glyphID:int):HardwareGlyph
+		public function addPathsAsHardwareGlyph(charCode:uint, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>, font:HardwareFont, vertexDistance:Number, glyphID:int):HardwareGlyph
 		{
-			var glyph:HardwareGlyph = addPathsToSection(paths, originalPaths);
+			var glyph:HardwareGlyph = addPathsToSection(charCode, paths, originalPaths);
 			addHardwareGlyphToCache(glyph, font, vertexDistance, glyphID);
 			
 			return glyph;

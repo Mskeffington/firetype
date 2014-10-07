@@ -95,5 +95,10 @@ package de.maxdidit.hardware.text.format
 		{
 			_color[3] = value;
 		}
+		
+		public function get alpha ():Number
+		{
+			return _color[3];
+		}
 	} 
 } 

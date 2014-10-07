@@ -311,7 +311,7 @@ package de.maxdidit.hardware.text
 		{
 			if (_layoutDirty)
 			{
-				loseAllChildren();
+				//loseAllChildren();
 				parseText();
 				
 				_textContainer.flagForUpdate();
@@ -375,7 +375,7 @@ package de.maxdidit.hardware.text
 								var originalPaths:Vector.<Vector.<Vertex>> = new Vector.<Vector.<Vertex>>();
 								
 								glyphInstance.glyph.retrievePaths(glyphInstance.vertexDistance, paths, originalPaths);
-								hardwareGlyph = cache.addPathsAsHardwareGlyph(paths, originalPaths, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.glyph.header.index);
+								hardwareGlyph = cache.addPathsAsHardwareGlyph(glyphInstance.characterCode, paths, originalPaths, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.glyph.header.index);
 								hardwareGlyph.glyph = glyphInstance.glyph;
 							}
 							

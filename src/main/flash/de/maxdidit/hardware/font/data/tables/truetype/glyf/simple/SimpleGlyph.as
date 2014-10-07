@@ -185,6 +185,7 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.simple
 		{ 
 			var glyphInstance:HardwareGlyphInstance = HardwareGlyphInstance.getHardwareGlyphInstance(null); 
 			glyphInstance.glyph = this; 
+			glyphInstance.characterCode = this.charCode;
 			instances.push(glyphInstance); 
 		} 
 		 
