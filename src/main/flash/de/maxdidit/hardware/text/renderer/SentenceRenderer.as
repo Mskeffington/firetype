@@ -274,7 +274,6 @@ package de.maxdidit.hardware.text.renderer
 			_context3d.setProgram(_programPair);
 			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
 			
-			var rdrCnt:int = 0;
 			for each (var font:Object in instanceMap)
 			{
 				for each (var vertexDistance:Object in font)
@@ -296,12 +295,9 @@ package de.maxdidit.hardware.text.renderer
 				
 					//position/size
 					createConstantBuffer (currentWord, vertexDistance, textColorMap);
-					rdrCnt++;
 					_context3d.drawTriangles(vertexAndIndex.indexBuffer, 0, vertexAndIndex.numTriangles);
 				}	
 			}
-				
-			trace(rdrCnt)
 		}
 		
 		public function clear():void

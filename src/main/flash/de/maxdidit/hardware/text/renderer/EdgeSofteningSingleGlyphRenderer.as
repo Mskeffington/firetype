@@ -39,6 +39,8 @@ package de.maxdidit.hardware.text.renderer
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
+	import flash.geom.Matrix3D;
+	import starling.core.Starling;
 	import starling.utils.VertexData;
 	
 	/** 
@@ -70,12 +72,18 @@ package de.maxdidit.hardware.text.renderer
 		
 		override protected function get fieldsPerVertex():uint
  		{
-			return 7;
+			return 11;
  		}
  		
  		override protected function get vertexShaderCode():String
  		{
-			return	"m44 op, va0, vc0 \n" + // 4x4 matrix transform to output space
+			return "m44 vt0, va0, vc0 \n" + // 4x4 matrix transform to output space
+			/*"mov vt3, va2.wzzz \n" +
+			"mov vt4, va2.zwzz \n" +
+			"mov vt5, va2.zzwz \n" +
+			"mov vt6, va2.yxzw \n" +
+			"m44 op, vt0, vt3 \n" +*/
+			"add op, va2, vt0 \n" + //add the offset to the vertex in the direction of the noraml
 			"mul v0, vc4, va1 \n";  // multiply color with alpha and pass it to fragment shader
  		}
  		
@@ -97,6 +105,8 @@ package de.maxdidit.hardware.text.renderer
 			const newLength:uint = index + l * fieldsPerVertex;
 			
 			_vertexData.length = newLength;
+			const stageWidth:int = Starling.current.stage.stageWidth;
+			const stageHeight:int = Starling.current.stage.stageHeight;
 			
 			for (var i:uint = 0; i < l; i++)
 			{
@@ -109,6 +119,14 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = 1; //g
 				_vertexData[index++] = 1; //b
 				_vertexData[index++] = vertex.alpha;
+				
+				var scaleX:Number = vertex.normalOffset / stageWidth;
+				var scaleY:Number = vertex.normalOffset / stageHeight;
+				
+				_vertexData[index++] = vertex.nX * scaleX;
+				_vertexData[index++] = vertex.nY * scaleY;
+				_vertexData[index++] = 0;
+				_vertexData[index++] = 1;
 			}
 		}
 		
@@ -124,7 +142,8 @@ package de.maxdidit.hardware.text.renderer
 			
 			_context3d.setVertexBufferAt(0, _vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
 			_context3d.setVertexBufferAt(1, _vertexBuffer, VertexData.COLOR_OFFSET + 1/*for z*/, Context3DVertexBufferFormat.FLOAT_4);
-
+			_context3d.setVertexBufferAt(2, _vertexBuffer, 7/*normal offset*/, Context3DVertexBufferFormat.FLOAT_4);
+			
 			for each (var font:Object in instanceMap)
 			{
 				for each (var vertexDistance:Object in font)
@@ -152,6 +171,7 @@ package de.maxdidit.hardware.text.renderer
 								var currentInstance:HardwareGlyphInstance = instances[i];
 								
 								_context3d.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, currentInstance.globalTransformation, true);
+								
 								_context3d.drawTriangles(_indexBuffer, currentInstance.hardwareGlyph.indexOffset, currentInstance.hardwareGlyph.numTriangles);
 							}
 						}

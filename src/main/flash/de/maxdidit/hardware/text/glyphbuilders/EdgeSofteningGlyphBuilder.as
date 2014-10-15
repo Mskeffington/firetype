@@ -16,10 +16,11 @@ package de.maxdidit.hardware.text.glyphbuilders
 		// Member Fields
 		///////////////////////
 		
-		private var _outlineThickness:Number = 30;
+		private var _outlineThickness:Number = 45;
 		private var _pathConnector:PathConnector;
 		private var _innerOuterTriangulator:ITriangulator;
 		
+		private const MAX_NORMAL_SCALE:Number = 2;
 		///////////////////////
 		// Constructor
 		///////////////////////
@@ -33,19 +34,21 @@ package de.maxdidit.hardware.text.glyphbuilders
 		
 		///////////////////////
 		// Member Functions
-		///////////////////////
-		
+		///////////////////////		
 		override public function buildGlyph(paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>):HardwareGlyph
 		{
-			var result:HardwareGlyph = super.buildGlyph(paths, originalPaths);
+			var pl:uint = originalPaths.length;
+			var i:int = 0;
 			
-			const pl:uint = originalPaths.length;
-			for (var i:uint = 0; i < pl; i++)
+			
+			var result:HardwareGlyph = super.buildGlyph(paths, originalPaths);
+			for (i = 0; i < pl; i++)
 			{
 				var path:Vector.<Vertex> = originalPaths[i];
-				
+				calculateCurveDistance (-1, path);
 				buildOutline(result, path);
 			}
+			
 			
 			return result;
 		}
@@ -69,8 +72,7 @@ package de.maxdidit.hardware.text.glyphbuilders
 				
 				sumCrossProduct += vertexA.nX * vertexB.nY - vertexA.nY * vertexB.nX;
 				
-				vertexB = new Vertex(vertexA.x, vertexA.y);
-				
+				vertexB = new Vertex(vertexA.x, vertexA.y, vertexA.onCurve);
 				vertexB.nX = -vertexA.nX;
 				vertexB.nY = -vertexA.nY;
 				
@@ -83,25 +85,19 @@ package de.maxdidit.hardware.text.glyphbuilders
 			{
 				vertexA = path[i];
 				
-				vertexB = new Vertex(vertexA.x, vertexA.y);
+				vertexB = new Vertex(vertexA.x, vertexA.y, vertexA.onCurve);
 				
 				vertexB.nX = vertexA.nX;
 				vertexB.nY = vertexA.nY;
 				
+				vertexB.alpha = 0;
+				
 				outlineVertices[i] = vertexB;
 				
 			}
+			calculateCurveDistance (3, outlineVertices); 
+			calculateCurveDistance (3, outlineBase);
 			
-			var distanceProgress:Number = 0;
-			var blurThickness:int = _outlineThickness;
-			while (distanceProgress < blurThickness)
-			{
-				var minDistance:Number = calculateMinDistance(blurThickness - distanceProgress, outlineVertices, minDistanceIndices);
-				outlineVertices = insetVertices(minDistance, outlineVertices);
-				outlineVertices = createNextVertexLayer(minDistance, outlineVertices, minDistanceIndices);
-				
-				distanceProgress += minDistance;
-			}
 			
 			var len:int;
 			var origLen:int;
@@ -109,15 +105,8 @@ package de.maxdidit.hardware.text.glyphbuilders
 			// connect outlines
 			len = origLen = outlineVertices.length;
 			outlineVertices.length += outlineBase.length;
-			//set alpha
-			for (i = 0; i < len ; i++)
-			{
-				outlineVertices[i].alpha = 0;
-			}
-			
 			for (i = outlineBase.length - 1; i >= 0 ; i--)
 			{
-				outlineBase[i].alpha = 1;
 				outlineVertices[len + (outlineBase.length -i - 1)] = outlineBase[i];
 			}
 			
@@ -133,179 +122,45 @@ package de.maxdidit.hardware.text.glyphbuilders
 			{
 				result.vertices[k++] = outlineVertices[i];
 			}
-			
-			
+				
 		}
 		
-		private function insetVertices(distance:Number, outlineVertices:Vector.<Vertex>):Vector.<Vertex>
+		private function calculateCurveDistance (distance:int, outlineVertices:Vector.<Vertex>):void
 		{
-			var insetVertices:Vector.<Vertex> = new Vector.<Vertex>(outlineVertices.length);
-			
 			const outlineLength:uint = outlineVertices.length;
 			
-			// Inset
+			// calculate the distance scale along the normal
 			for (var outlineIndex:uint = 0; outlineIndex < outlineLength; outlineIndex++)
 			{
 				var vertexA:Vertex = outlineVertices[outlineIndex];
 				var vertexB:Vertex = outlineVertices[(outlineIndex + 1) % outlineLength];
+				var vertexC:Vertex = outlineVertices[(outlineIndex + outlineLength - 1) % outlineLength];
 				
-				// calculate distance along normal that the vertex should be moved
+				if (vertexA.onCurve == false || vertexB.onCurve == false || vertexC.onCurve == false)
+				{
+					continue;
+				}
+				
 				var baX:Number = vertexB.y - vertexA.y;
 				var baY:Number = -(vertexB.x - vertexA.x);
 				var baL:Number = Math.sqrt(baX * baX + baY * baY);
 				baX /= baL;
 				baY /= baL;
 				
-				var cosAlpha:Number = (baX * vertexA.nX + baY * vertexA.nY);
-				var scale:Number = distance / -cosAlpha;
+				var cosAlpha:Number = Math.abs(baX * vertexA.nX + baY * vertexA.nY);				
 				
-				if (isNaN(scale))
+				var scale:Number = 1 / cosAlpha;
+				if (scale > MAX_NORMAL_SCALE)
 				{
-					scale = 0;
+					scale = MAX_NORMAL_SCALE;
+				}
+				else if (scale < 1)
+				{
+					scale = 1;
 				}
 				
-				// create new vertex
-				var newVertex:Vertex = new Vertex(vertexA.x + vertexA.nX * scale, vertexA.y + vertexA.nY * scale);
-				
-				newVertex.nX = vertexA.nX;
-				newVertex.nY = vertexA.nY;
-				
-				insetVertices[outlineIndex] = newVertex;
+				vertexA.normalOffset = distance * scale;
 			}
-			
-			return insetVertices;
-		}
-		
-		private function createNextVertexLayer(distance:Number, outlineVertices:Vector.<Vertex>, minDistanceIndices:Vector.<uint>):Vector.<Vertex>
-		{
-			const insetLength:uint = outlineVertices.length - minDistanceIndices.length;
-			var insetVertices:Vector.<Vertex> = new Vector.<Vertex>(insetLength);
-			
-			const outlineLength:uint = outlineVertices.length;
-			const indicesLength:uint = minDistanceIndices.length;
-			
-			var insetIndex:uint = 0;
-			var indexIndex:uint = 0;
-			
-			// remove intersection vertices
-			for (var outlineIndex:uint = 0; outlineIndex < outlineLength; outlineIndex++)
-			{
-				var vertexA:Vertex = outlineVertices[outlineIndex];
-				
-				// create new vertex
-				var newVertex:Vertex = new Vertex(vertexA.x, vertexA.y);
-				
-				// test if vertex is an intersection				
-				newVertex.nX = vertexA.nX;
-				newVertex.nY = vertexA.nY;
-				
-				newVertex.index = 1;
-				
-				if (indexIndex < indicesLength && minDistanceIndices[indexIndex] == outlineIndex)
-				{
-					// calculate new normal
-					var vertexB:Vertex = outlineVertices[(outlineIndex + 2) % outlineLength];
-					
-					// calculate distance along normal that the vertex should be moved
-					var baX:Number = vertexB.x - vertexA.x;
-					var baY:Number = vertexB.y - vertexA.y;
-					var baL:Number = Math.sqrt(baX * baX + baY * baY);
-					baX /= baL;
-					baY /= baL;
-					var vertexC:Vertex = outlineVertices[outlineIndex == 0 ? outlineLength - 1 : outlineIndex - 1];
-					
-					var caX:Number = vertexC.x - vertexA.x;
-					var caY:Number = vertexC.y - vertexA.y;
-					var caL:Number = Math.sqrt(caX * caX + caY * caY);
-					caX /= caL;
-					caY /= caL;
-					
-					newVertex.nX = baX + caX;
-					newVertex.nY = baY + caY;
-					var nL:Number = Math.sqrt(newVertex.nX * newVertex.nX + newVertex.nY * newVertex.nY);
-					newVertex.nX /= nL;
-					newVertex.nY /= nL;
-					
-					outlineIndex++; // skip next vertex
-					indexIndex++;
-				}
-				
-				insetVertices[insetIndex % insetLength] = newVertex;
-				insetIndex++;
-			}
-			
-			return insetVertices;
-		}
-		
-		private function calculateMinDistance(initialMinDistance:Number, outlineVertices:Vector.<Vertex>, minDistanceIndices:Vector.<uint>):Number
-		{
-			var minDistance:Number = initialMinDistance;
-			
-			minDistanceIndices.length = 0;
-			
-			//trace("------");
-			
-			const l:uint = outlineVertices.length;
-			for (var i:uint = 0; i < l; i++)
-			{
-				var vertexA:Vertex = outlineVertices[i];
-				var vertexB:Vertex = outlineVertices[(i + 1) % l];
-				
-				var intersection:Vertex = calculateIntersection(vertexA, vertexB);
-				var distance:Number = calculateDistanceToEdge(intersection, vertexA, vertexB);
-				
-				//trace(i + "- " + distance);
-				
-				if (distance >= 0)
-				{
-					if (minDistance == distance)
-					{
-						minDistanceIndices.push(i);
-					}
-					else if (distance <= minDistance)
-					{
-						minDistance = distance;
-						minDistanceIndices.length = 1;
-						minDistanceIndices[0] = i;
-					}
-				}
-			}
-			//trace("md "+minDistance)
-			return minDistance;
-		}
-		
-		private function calculateDistanceToEdge(intersection:Vertex, vertexA:Vertex, vertexB:Vertex):Number
-		{
-			const abX:Number = vertexB.x - vertexA.x;
-			const abY:Number = vertexB.y - vertexA.y;
-			const abL:Number = Math.sqrt(abX * abX + abY * abY);
-			
-			if (abL == 0)
-			{
-				return 0;
-			}
-			
-			const cosAlpha:Number = (vertexA.nX * abX + vertexA.nY * abY) / abL;
-			const sinAlpha:Number = Math.sin(Math.acos(cosAlpha)); // Ew!
-			
-			// hypotenuse
-			const hX:Number = intersection.x - vertexA.x;
-			const hY:Number = intersection.y - vertexA.y;
-			const lengthHypotenuse:Number = Math.sqrt(hX * hX + hY * hY);
-			
-			const lengthOpposite:Number = sinAlpha * lengthHypotenuse;
-			
-			const crossProduct:Number = abX * hY - abY * hX;
-			
-			return crossProduct > 0 ? lengthOpposite : -lengthOpposite;
-		}
-		
-		private function calculateIntersection(vertexA:Vertex, vertexB:Vertex):Vertex
-		{
-			const nBynBx:Number = vertexB.nY / vertexB.nX;
-			const t:Number = (vertexB.y + nBynBx * (vertexA.x - vertexB.x) - vertexA.y) / (vertexA.nY - nBynBx * vertexA.nX);
-			
-			return new Vertex(vertexA.x + vertexA.nX * t, vertexA.y + vertexA.nY * t);
 		}
 	
 	}

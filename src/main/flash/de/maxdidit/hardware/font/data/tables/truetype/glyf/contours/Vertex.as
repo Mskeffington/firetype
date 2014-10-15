@@ -37,12 +37,14 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 		 
 		public var onCurve:Boolean;
 		
-		public var nX:Number; 
-		public var nY:Number; 
+		private var _nX:Number; 
+		private var _nY:Number; 
 		
 		public var index:int = 0;
 		
 		public var alpha:Number = 1;
+		public var normalOffset:Number = 0;
+		
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
@@ -54,6 +56,50 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 			 
 			onCurve = $onCurve; 
 		} 
+		
+		/**
+		 * ...
+		 * @return	...
+		 **/
+		
+		public function get nX():Number 
+		{
+			return _nX;
+		}
+		
+		
+		/**
+		 * ...
+		 * @param	...
+		 **/
+		
+		public function set nX(value:Number):void 
+		{
+			_nX = value;
+		}
+		
+		/**
+		 * ...
+		 * @return	...
+		 **/
+		
+		public function get nY():Number 
+		{
+			return _nY;
+		}
+		
+		
+		/**
+		 * ...
+		 * @param	...
+		 **/
+		
+		public function set nY(value:Number):void 
+		{
+			_nY = value;
+		}
+		
+		
 		 
 	} 
 } 

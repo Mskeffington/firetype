@@ -1,10 +1,11 @@
 package de.maxdidit.hardware.text.starling
 {
+	import com.crestron.common.enums.ControlState;
 	import com.crestron.common.events.FormattedTextEvent;
-	import com.crestron.components.text.FiretypeFontLoader;
 	import com.crestron.components.text.utils.CIPTagParser;
 	import com.crestron.components.text.utils.HTMLTextParser;
 	import de.maxdidit.hardware.text.starling.FiretypeStarlingTextField;
+	import feathers.core.FeathersControl;
 	import feathers.core.IFeathersControl;
 	import feathers.core.TokenList;
 	import flash.geom.Rectangle;
@@ -26,18 +27,9 @@ package de.maxdidit.hardware.text.starling
 	
 	
 	
-	public class FiretypeTextRenderer extends FiretypeStarlingTextField implements ITextRenderer, IFeathersControl
+	public class FiretypeTextRenderer extends FeathersControl implements ITextRenderer
 	{
-		protected var _isEnabled:Boolean = true;
 		protected var _wordWrap:Boolean;
-		protected var _maxHeight:Number;
-		protected var _maxWidth:Number;
-		
-		protected var _minHeight:Number;
-		protected var _minWidth:Number;
-		protected var _clipRect:Rectangle;
-		protected var _isCreated:Boolean = true;
-		protected var _isInitialized:Boolean =true;
 		protected var _baseline:int = 0;
 		protected var _horizontalAlign:String;
 		protected var _isHtml:Boolean;
@@ -47,19 +39,23 @@ package de.maxdidit.hardware.text.starling
 		protected var _italic:Boolean = false;
 		protected var _rawText:String;
 		protected var _text:String;
-		protected var _textObjectArr:Array;
+		protected var _textObjectArr:Array = [];
 		protected var _maxControlWidth:Number;
+		protected var _firetypeStarlingTextField:FiretypeStarlingTextField;
+		
 		
 		public function FiretypeTextRenderer(cache:HardwareCharacterCache = null)
 		{
-			super (cache);
-			//this.font = FiretypeFontLoader.getFont ();
-			//this.vertexDistance = 30;
+			super ();
+			_firetypeStarlingTextField = new FiretypeStarlingTextField ();
+			
+			addChild (_firetypeStarlingTextField);
 		}
-		public function setSize (width:Number, height:Number):void
+		public override function setSize (width:Number, height:Number):void
 		{
-			this.width = width;
-			this.height = height;
+			_firetypeStarlingTextField.width = width;
+			_firetypeStarlingTextField.height = height;
+			super.setSize (width, height);
 		}
 		
 		
@@ -77,108 +73,6 @@ package de.maxdidit.hardware.text.starling
 		{
 			return new Point(1,1);
 		}
-		public function get minWidth():Number 
-		{
-			return _minWidth;
-		}
-		public function set minWidth(value:Number):void 
-		{
-			_minWidth = value;
-		}
-		public function get minHeight():Number 
-		{
-			return _minHeight;
-		}
-		
-		public function set minHeight(value:Number):void 
-		{
-			_minHeight = value;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get maxWidth():Number 
-		{
-			return _maxWidth;
-		}
-		
-		public function set maxWidth(value:Number):void 
-		{
-			_maxWidth = value;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get maxHeight():Number 
-		{
-			return _maxHeight;
-		}
-		
-		public function set maxHeight(value:Number):void 
-		{
-			_maxHeight = value;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get clipRect():Rectangle 
-		{
-			return _clipRect;
-		}
-		public function set clipRect(value:Rectangle):void 
-		{
-			_clipRect = value;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get isEnabled():Boolean 
-		{
-			return _isEnabled;
-		}
-		public function set isEnabled(value:Boolean):void 
-		{
-			_isEnabled = value;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get isInitialized():Boolean 
-		{
-			return _isInitialized;
-		}
-		
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
-		
-		public function get isCreated():Boolean 
-		{
-			return _isCreated;
-		}
-		
 		
 		public function set isHTML(value:Boolean):void 
 		{
@@ -196,8 +90,8 @@ package de.maxdidit.hardware.text.starling
 		}
 		public function set textFormat(value:TextFormat):void 
 		{
-			this.color = uint(value.color) + 0xFF << 8;
-			this.textScale = int (value.size) / 50;
+			_firetypeStarlingTextField.color = uint(value.color);
+			_firetypeStarlingTextField.textScale = int (value.size) / 50;
 			_horizontalAlign = value.align;
 			_font = value.font;
 			_bold = value.bold;
@@ -207,7 +101,7 @@ package de.maxdidit.hardware.text.starling
 		
 		public function get textFormat():TextFormat
 		{
-			return new TextFormat (_font, this.textScale * 50, this.color, _bold, _italic, false,null,null,_horizontalAlign);
+			return new TextFormat (_font, _firetypeStarlingTextField.textScale * 50, _firetypeStarlingTextField.color, _bold, _italic, false,null,null,_horizontalAlign);
 		}
 		
 
@@ -216,9 +110,14 @@ package de.maxdidit.hardware.text.starling
 			return _baseline;
 		}
 	
-		public override function set text (value:String):void
+		public function get text ():String
 		{
-			super.text = value;
+			return _firetypeStarlingTextField.text;
+		}
+		public function set text (value:String):void
+		{
+			_firetypeStarlingTextField.text = value;
+			this.invalidate(INVALIDATION_FLAG_DATA);
 			/*_rawText = value;
 				
 			//Now we will parse the text and seperate out the CIP relevant objects
@@ -245,7 +144,7 @@ package de.maxdidit.hardware.text.starling
 			
 				//no vertical truncation
 				var maxWidth:Number = _maxControlWidth;
-				var widthRatio:Number = textWidth / maxWidth;
+				var widthRatio:Number = _firetypeStarlingTextField.textWidth / maxWidth;
 				
 				if (widthRatio > 1)
 				{
@@ -262,25 +161,27 @@ package de.maxdidit.hardware.text.starling
 		
 		public function set htmlText (value:String):void
 		{
-			trace("setting text" + value	)
-			super.text = value;
+			_rawText = value;
+			this.text = value;
 		}
 		public function get htmlText ():String
 		{
 			return _rawText;
 		}
+		override public function invalidate (flag:String = INVALIDATION_FLAG_ALL):void
+		{
+			super.invalidate (flag);
+		}
 		
-		/**
-		 * functions we dont really need...
-		 */
-		public function get nameList():TokenList {	return new TokenList();}
-		public function get styleNameList():TokenList {	return new TokenList();	}
-		public function get styleName():String {return "";}
-		public function set styleName(value:String):void {}
-		public function validate():void  {}
-		public function invalidate():void  {}		
-		/*public function get styleProvider():IStyleProvider { return null;	}
-		public function set styleProvider(value:IStyleProvider):void {}*/
+		public override function validate ():void  
+		{
+			if (this.isInvalid()) 
+			{
+				super.validate ();
+				trace("invalidate")
+				dispatchEventWith(ControlState.VALIDATION_COMPLETE, true);				
+			}
+		}
 		public function set disabledTextFormat(value:TextFormat):void  {}
 		public function set maxControlWidth (value:Number):void  { _maxControlWidth = value; }
 		public function set maxControlHeight(value:Number):void  {}
@@ -289,7 +190,6 @@ package de.maxdidit.hardware.text.starling
 		public function set antiAliasType(value:String):void {}
 		public function get textObjectArr():Array {	return _textObjectArr;}
 		public function set textObjectArr (value:Array):void { _textObjectArr = value; }
-		public function get depth ():int { return 0; }
 	}
 
 }

@@ -158,6 +158,7 @@ package de.maxdidit.hardware.font.data.tables.truetype.glyf.contours
 				
 				vertexB.nX = nX / nL;
 				vertexB.nY = nY / nL;
+				
 			}
 			 
 			originalPaths.push(path);
