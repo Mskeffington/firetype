@@ -95,8 +95,8 @@ package de.maxdidit.hardware.text.glyphbuilders
 				outlineVertices[i] = vertexB;
 				
 			}
-			calculateCurveDistance (3, outlineVertices); 
-			calculateCurveDistance (3, outlineBase);
+			calculateCurveDistance (1.5, outlineVertices); 
+			calculateCurveDistance (1.5, outlineBase);
 			
 			
 			var len:int;

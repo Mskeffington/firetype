@@ -78,18 +78,16 @@ package de.maxdidit.hardware.text.renderer
  		override protected function get vertexShaderCode():String
  		{
 			return "m44 vt0, va0, vc0 \n" + // 4x4 matrix transform to output space
-			/*"mov vt3, va2.wzzz \n" +
-			"mov vt4, va2.zwzz \n" +
+			"mov vt3, va2.wzzx \n" +
+			"mov vt4, va2.zwzy \n" +
 			"mov vt5, va2.zzwz \n" +
-			"mov vt6, va2.yxzw \n" +
-			"m44 op, vt0, vt3 \n" +*/
-			"add op, va2, vt0 \n" + //add the offset to the vertex in the direction of the noraml
+			"mov vt6, va2.zzzw \n" +
+			"m44 op, vt0, vt3 \n" +
 			"mul v0, vc4, va1 \n";  // multiply color with alpha and pass it to fragment shader
  		}
  		
  		override protected function get fragmentShaderCode():String
  		{
- 			//transform v0.alpha by (distance from the edge / thickness of border)
 			return "mov oc, v0";
  		}
 		
@@ -120,11 +118,11 @@ package de.maxdidit.hardware.text.renderer
 				_vertexData[index++] = 1; //b
 				_vertexData[index++] = vertex.alpha;
 				
-				var scaleX:Number = vertex.normalOffset / stageWidth;
-				var scaleY:Number = vertex.normalOffset / stageHeight;
+				var transposeX:Number = vertex.normalOffset / stageWidth;
+				var transposeY:Number = vertex.normalOffset / stageHeight;
 				
-				_vertexData[index++] = vertex.nX * scaleX;
-				_vertexData[index++] = vertex.nY * scaleY;
+				_vertexData[index++] = vertex.nX * transposeX;
+				_vertexData[index++] = vertex.nY * transposeY;
 				_vertexData[index++] = 0;
 				_vertexData[index++] = 1;
 			}
@@ -141,8 +139,8 @@ package de.maxdidit.hardware.text.renderer
 			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA)
 			
 			_context3d.setVertexBufferAt(0, _vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
-			_context3d.setVertexBufferAt(1, _vertexBuffer, VertexData.COLOR_OFFSET + 1/*for z*/, Context3DVertexBufferFormat.FLOAT_4);
-			_context3d.setVertexBufferAt(2, _vertexBuffer, 7/*normal offset*/, Context3DVertexBufferFormat.FLOAT_4);
+			_context3d.setVertexBufferAt(1, _vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_4);
+			_context3d.setVertexBufferAt(2, _vertexBuffer, 7, Context3DVertexBufferFormat.FLOAT_4);
 			
 			for each (var font:Object in instanceMap)
 			{
