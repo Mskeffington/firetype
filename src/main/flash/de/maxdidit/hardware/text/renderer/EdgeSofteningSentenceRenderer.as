@@ -28,6 +28,7 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.text.cache.TextColorMap;
 	import de.maxdidit.hardware.text.components.HardwareGlyphInstance;
 	import de.maxdidit.hardware.text.format.TextColor;
+	import flash.display.Stage;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
@@ -36,12 +37,11 @@ package de.maxdidit.hardware.text.renderer
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.utils.Dictionary;
-	import starling.utils.VertexData;
 	/**
 	 * this renderer will render as many characters as it can in a single text field.
 	 * @author Michael Skeffington
 	 */
-	public class SentenceRenderer implements IHardwareTextRenderer
+	public class EdgeSofteningSentenceRenderer implements IHardwareTextRenderer
 	{
 		/////////////////////// 
 		// Constants 
@@ -65,6 +65,7 @@ package de.maxdidit.hardware.text.renderer
 		
 		
 		protected var _context3d:Context3D; 
+		protected var _stage:Stage; 
 		
 		private var _fallbackTextColor:TextColor;
 		
@@ -75,9 +76,10 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
-		public function SentenceRenderer($context3d:Context3D)
+		public function EdgeSofteningSentenceRenderer($context3d:Context3D, $stage:Stage)
 		{
 			_context3d = $context3d; 
+			_stage = $stage;
 			
 			// init shaders
 			_vertexAssembly.assemble(Context3DProgramType.VERTEX, vertexShaderCode); 
@@ -96,7 +98,7 @@ package de.maxdidit.hardware.text.renderer
 		protected function get fieldsPerVertex():uint
 		{
 			//we need x,y,z,rotation,alpha,
-			return 5;
+			return 13;
 		}
 		
 		protected function get fieldsPerConstant():uint
@@ -106,8 +108,20 @@ package de.maxdidit.hardware.text.renderer
 		
 		protected function get vertexShaderCode():String
  		{
-			return	"m44 op, va0, vc[va1.x] \n"+ // 4x4 matrix transform to output space
-			"mov v0, vc[va2.x]\n";
+			/*
+			return "mov vt3, va4.wzzx \n" + //create the mvp matrix
+			"mov vt4, va4.zwzy \n" +
+			"mov vt5, va4.zzwz \n" +
+			"mov vt6, va4.zzzw \n" +
+			*/
+			
+			return "m44 vt0, va0, vc[va1.x] \n" + // 4x4 matrix transform to output space
+			"mov vt3, va4.wzzx \n" + //create the transpose matrix
+			"mov vt4, va4.zwzy \n" +
+			"mov vt5, va4.zzwz \n" +
+			"mov vt6, va4.zzzw \n" +
+			"m44 op, vt0, vt3 \n" + //offset the point by the transpose alone the noraml
+			"mul v0, vc[va2.x], va3 \n"; // multiply color with alpha and pass it to fragment shader*/
  		}
  		protected function get fragmentShaderCode():String
  		{
@@ -151,7 +165,6 @@ package de.maxdidit.hardware.text.renderer
 						var currentInstance:HardwareGlyphInstance = instances[i];
 						
 						var constantVectorIndex:uint = charCount * fieldsPerConstant;
-						
 						_context3d.setProgramConstantsFromMatrix (Context3DProgramType.VERTEX, constantVectorIndex, currentInstance.globalTransformation, true);
 						_context3d.setProgramConstantsFromVector (Context3DProgramType.VERTEX, constantVectorIndex + 4, textColor.colorVector, 1);
 						charCount ++;
@@ -199,11 +212,16 @@ package de.maxdidit.hardware.text.renderer
 			var index:uint = vertexBufferData.length;
 			var newLength:uint = index + (l * fieldsPerVertex);
 			
+			const stageWidth:int = _stage.stageWidth;
+			const stageHeight:int = _stage.stageHeight;
 			vertexBufferData.length = newLength;
 		
 			for (var i:uint = 0; i < l; i++)
 			{
 				var vertex:Vertex = vertices[i];
+				
+				var transposeX:Number = vertex.normalOffset / stageWidth;
+				var transposeY:Number = vertex.normalOffset / stageHeight;
 				
 				vertexBufferData[index++] = vertex.x;
 				vertexBufferData[index++] = vertex.y;
@@ -212,10 +230,15 @@ package de.maxdidit.hardware.text.renderer
 				vertexBufferData[index++] = constIndex * fieldsPerConstant;
 				vertexBufferData[index++] = constIndex * fieldsPerConstant + 4;
 				
-				/*vertexBufferData[index++] = 1; //r
-				vertexBufferData[index++] = 1; //g
-				vertexBufferData[index++] = 1; //b
-				vertexBufferData[index++] = 1//vertex.alpha;*/
+				vertexBufferData[index++] = 1;
+				vertexBufferData[index++] = 1;
+				vertexBufferData[index++] = 1;
+				vertexBufferData[index++] = vertex.alpha;
+				
+				vertexBufferData[index++] = vertex.nX * transposeX;
+				vertexBufferData[index++] = vertex.nY * transposeY;
+				vertexBufferData[index++] = 0;
+				vertexBufferData[index++] = 1;
 			}
 		}
 		
@@ -287,12 +310,14 @@ package de.maxdidit.hardware.text.renderer
 						vertexAndIndex = createBuffers (currentWord);
 						_bufferCache[currentWord] = vertexAndIndex;
 					}
+					
 					//set the vertex buffers
-					_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
+					_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 					_context3d.setVertexBufferAt (1, vertexAndIndex.vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);//constant offset
 					_context3d.setVertexBufferAt (2, vertexAndIndex.vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_1);//color offset
-				
-				
+					_context3d.setVertexBufferAt (3, vertexAndIndex.vertexBuffer, 5, Context3DVertexBufferFormat.FLOAT_4);//alpha
+					_context3d.setVertexBufferAt (4, vertexAndIndex.vertexBuffer, 9, Context3DVertexBufferFormat.FLOAT_4);//normal offset
+					
 					//position/size
 					createConstantBuffer (currentWord, vertexDistance, textColorMap);
 					_context3d.drawTriangles(vertexAndIndex.indexBuffer, 0, vertexAndIndex.numTriangles);

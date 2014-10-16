@@ -25,6 +25,8 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.font.triangulation.EarClippingTriangulator; 
 	import de.maxdidit.hardware.font.triangulation.ITriangulator; 
 	import de.maxdidit.hardware.text.glyphbuilders.IGlyphBuilder;
+	import de.maxdidit.hardware.text.utils.FlashPlatform;
+	import flash.display.Stage;
 	import flash.display3D.Context3D; 
 	/** 
 	 * ... 
@@ -36,15 +38,16 @@ package de.maxdidit.hardware.text.renderer
 		// Member Fields 
 		/////////////////////// 
 		 
-		private var context3d:Context3D;
-		 
+		private var _context3d:Context3D;
+		private var _stage:Stage;
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
 		 
-		public function SentenceRendererFactory(context3d:Context3D)  
+		public function SentenceRendererFactory(context3d:Context3D, stage:Stage)  
 		{ 
-			this.context3d = context3d; 
+			_stage = stage;
+			_context3d = context3d; 
 		} 
 		 
 		/////////////////////// 
@@ -55,7 +58,15 @@ package de.maxdidit.hardware.text.renderer
 		 
 		public function retrieveHardwareTextRenderer():IHardwareTextRenderer  
 		{ 
-			var renderer:SentenceRenderer = new SentenceRenderer(context3d); 
+			var renderer:IHardwareTextRenderer
+			if (FlashPlatform.hasAntiAliasing (_context3d))
+			{
+				renderer = new SentenceRenderer (_context3d); 
+			}
+			else
+			{
+				renderer = new EdgeSofteningSentenceRenderer (_context3d, _stage);
+			}
 			return renderer; 
 		} 
 		 

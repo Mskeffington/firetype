@@ -32,6 +32,7 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.font.HardwareGlyph;
 	import de.maxdidit.hardware.font.triangulation.ITriangulator;
 	import de.maxdidit.hardware.text.components.HardwareGlyphInstance;
+	import flash.display.Stage;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DProgramType;
@@ -40,8 +41,6 @@ package de.maxdidit.hardware.text.renderer
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix3D;
-	import starling.core.Starling;
-	import starling.utils.VertexData;
 	
 	/** 
 	 * ... 
@@ -56,13 +55,15 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Member Fields 
 		///////////////////////
+		protected var _stage:Stage; 
 		
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
 		
-		public function EdgeSofteningSingleGlyphRenderer($context3d:Context3D)
+		public function EdgeSofteningSingleGlyphRenderer($context3d:Context3D, $stage:Stage)
 		{
+			_stage = $stage;
 			super($context3d)
 		}
 		
@@ -82,7 +83,7 @@ package de.maxdidit.hardware.text.renderer
 			"mov vt4, va2.zwzy \n" +
 			"mov vt5, va2.zzwz \n" +
 			"mov vt6, va2.zzzw \n" +
-			"m44 op, vt0, vt3 \n" +
+			"m44 op, vt0, vt3 \n" +// 4x4 matrix transform to output space
 			"mul v0, vc4, va1 \n";  // multiply color with alpha and pass it to fragment shader
  		}
  		
@@ -103,8 +104,9 @@ package de.maxdidit.hardware.text.renderer
 			const newLength:uint = index + l * fieldsPerVertex;
 			
 			_vertexData.length = newLength;
-			const stageWidth:int = Starling.current.stage.stageWidth;
-			const stageHeight:int = Starling.current.stage.stageHeight;
+			
+			const stageWidth:int = _stage.stageWidth;
+			const stageHeight:int = _stage.stageHeight;
 			
 			for (var i:uint = 0; i < l; i++)
 			{
