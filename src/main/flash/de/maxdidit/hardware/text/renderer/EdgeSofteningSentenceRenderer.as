@@ -88,7 +88,7 @@ package de.maxdidit.hardware.text.renderer
 			_programPair = _context3d.createProgram(); 
 			_programPair.upload(_vertexAssembly.agalcode, _fragmentAssembly.agalcode); 
 			
-			_fallbackTextColor = new TextColor(null, 0xFFFFFFFF);
+			_fallbackTextColor = new TextColor (null, 0xFFFFFFFF);
 		}
 		
 		/////////////////////// 
@@ -132,13 +132,14 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Member Functions 
 		/////////////////////// 		
-		protected function createConstantBuffer (word:String, instanceMap:Object, textColorMap:TextColorMap):void
+		protected function createConstantBuffer (word:String, instanceOffset:int, instanceMap:Object, textColorMap:TextColorMap):void
 		{				
 			var fallbackTextColor:TextColor = new TextColor();
 			var textColor:TextColor;
 			fallbackTextColor.alpha = 1;
 						
 			var charCount:uint = 0;
+			var curCharIdx:uint = 0;
 			var currentVectorIndex:uint = 0;
 			for (var colorId:String in instanceMap)
 			{
@@ -162,12 +163,21 @@ package de.maxdidit.hardware.text.renderer
 					const l:uint = instances.length;
 					for (var i:uint = 0; i < l; i++)
 					{
-						var currentInstance:HardwareGlyphInstance = instances[i];
+						if (charCount >= instanceOffset)
+						{
+							var currentInstance:HardwareGlyphInstance = instances[i];
+							
+							var constantVectorIndex:uint = curCharIdx * fieldsPerConstant;
+							_context3d.setProgramConstantsFromMatrix (Context3DProgramType.VERTEX, constantVectorIndex, currentInstance.globalTransformation, true);
+							_context3d.setProgramConstantsFromVector (Context3DProgramType.VERTEX, constantVectorIndex + 4, textColor.colorVector, 1);
+							curCharIdx++;
+						}	
 						
-						var constantVectorIndex:uint = charCount * fieldsPerConstant;
-						_context3d.setProgramConstantsFromMatrix (Context3DProgramType.VERTEX, constantVectorIndex, currentInstance.globalTransformation, true);
-						_context3d.setProgramConstantsFromVector (Context3DProgramType.VERTEX, constantVectorIndex + 4, textColor.colorVector, 1);
 						charCount ++;
+						if (curCharIdx >= GLYPHS_PER_BATCH)
+						{
+							return;
+						}
 					}
 				}
 			}
@@ -180,12 +190,19 @@ package de.maxdidit.hardware.text.renderer
 			var vertexData:Vector.<Number> = new Vector.<Number>();
 			var indexData:Vector.<uint> = new Vector.<uint>();
 			
-			const l:uint = word.length;
+			var l:uint = word.length;
+			
+			if (l >= GLYPHS_PER_BATCH)
+			{
+				l = GLYPHS_PER_BATCH;
+			}
+			
 			var glyph:HardwareGlyph;
 			var character:String = "";
 			var numTriangles:uint = 0;
 			for (var i:int = 0; i < l; i++)
 			{
+				
 				glyph = _letterCache[word.charCodeAt(i)];
 				
 				addToIndexData (indexData, glyph.indices , vertexData.length / fieldsPerVertex);
@@ -208,6 +225,12 @@ package de.maxdidit.hardware.text.renderer
 		protected function addToVertexData(vertexBufferData:Vector.<Number>, vertices:Vector.<Vertex>, constIndex:uint):void
 		{
 			const l:uint = vertices.length;
+			
+			if (l * fieldsPerVertex > MAX_VERTEXBUFFER_BYTES)
+			{
+				//It is virtually impossible to overflow this buffer
+				return;
+			}
 			
 			var index:uint = vertexBufferData.length;
 			var newLength:uint = index + (l * fieldsPerVertex);
@@ -246,6 +269,12 @@ package de.maxdidit.hardware.text.renderer
 		{
 			const l:uint = indices.length;
 			
+			if (l > MAX_INDEXBUFFER_BYTES)
+			{
+				//It is virtually impossible to overflow this buffer
+				return;
+			}
+			
 			var index:uint = indexBufferData.length;
 			
 			indexBufferData.length = index + l;
@@ -282,18 +311,15 @@ package de.maxdidit.hardware.text.renderer
 		
 		public function addHardwareGlyph(glyph:HardwareGlyph):Boolean 
 		{
-			_letterCache[glyph.charCode] = glyph;
-			
+			if (_letterCache[glyph.charCode] == null)
+			{
+				_letterCache[glyph.charCode] = glyph;
+			}
 			return true;
 		}
 		
 		public function render(instanceMap:Object, textColorMap:TextColorMap):void
 		{
-			//figure out what the string says.
-			//see if we already have the vertex buffer for that string stored
-			//upload the constants
-			//drawtriangles
-			
 			_context3d.setProgram(_programPair);
 			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
 			
@@ -301,26 +327,35 @@ package de.maxdidit.hardware.text.renderer
 			{
 				for each (var vertexDistance:Object in font)
 				{
+					//figure out what the string says.
 					var currentWord:String = findWord (vertexDistance);
+					var renderPasses:int = currentWord.length / GLYPHS_PER_BATCH;
 					
-					var vertexAndIndex:VertexIndexUnion = _bufferCache[currentWord];
-					if (vertexAndIndex == null)
-					{
-						//create the buffer 
-						vertexAndIndex = createBuffers (currentWord);
-						_bufferCache[currentWord] = vertexAndIndex;
+					for (var i:uint = 0; i < renderPasses; i++ )
+					{	
+						var offset:int = i * GLYPHS_PER_BATCH;
+						var wordSubstring:String = currentWord.substr (offset, GLYPHS_PER_BATCH);
+						
+						//see if we already have the vertex buffer for that string stored
+						var vertexAndIndex:VertexIndexUnion = _bufferCache[wordSubstring];
+						if (vertexAndIndex == null)
+						{
+							//create the buffer 
+							vertexAndIndex = createBuffers (wordSubstring);
+							_bufferCache[currentWord] = vertexAndIndex;
+						}
+						
+						//set the vertex buffers
+						_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
+						_context3d.setVertexBufferAt (1, vertexAndIndex.vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);//constant offset
+						_context3d.setVertexBufferAt (2, vertexAndIndex.vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_1);//color offset
+						_context3d.setVertexBufferAt (3, vertexAndIndex.vertexBuffer, 5, Context3DVertexBufferFormat.FLOAT_4);//alpha
+						_context3d.setVertexBufferAt (4, vertexAndIndex.vertexBuffer, 9, Context3DVertexBufferFormat.FLOAT_4);//normal offset
+						
+						//position/size
+						createConstantBuffer (wordSubstring, offset, vertexDistance, textColorMap);
+						_context3d.drawTriangles (vertexAndIndex.indexBuffer, 0, vertexAndIndex.numTriangles);
 					}
-					
-					//set the vertex buffers
-					_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
-					_context3d.setVertexBufferAt (1, vertexAndIndex.vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);//constant offset
-					_context3d.setVertexBufferAt (2, vertexAndIndex.vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_1);//color offset
-					_context3d.setVertexBufferAt (3, vertexAndIndex.vertexBuffer, 5, Context3DVertexBufferFormat.FLOAT_4);//alpha
-					_context3d.setVertexBufferAt (4, vertexAndIndex.vertexBuffer, 9, Context3DVertexBufferFormat.FLOAT_4);//normal offset
-					
-					//position/size
-					createConstantBuffer (currentWord, vertexDistance, textColorMap);
-					_context3d.drawTriangles(vertexAndIndex.indexBuffer, 0, vertexAndIndex.numTriangles);
 				}	
 			}
 		}

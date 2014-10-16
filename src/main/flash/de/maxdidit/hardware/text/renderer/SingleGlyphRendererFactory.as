@@ -25,6 +25,7 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.font.triangulation.EarClippingTriangulator; 
 	import de.maxdidit.hardware.font.triangulation.ITriangulator; 
 	import de.maxdidit.hardware.text.glyphbuilders.IGlyphBuilder;
+	import de.maxdidit.hardware.text.utils.FlashPlatform;
 	import flash.display.Stage;
 	import flash.display3D.Context3D; 
 	/** 
@@ -60,7 +61,7 @@ package de.maxdidit.hardware.text.renderer
 		public function retrieveHardwareTextRenderer():IHardwareTextRenderer  
 		{ 
 			var renderer:IHardwareTextRenderer
-			if (FlashPlatform.hasAntiAliasing (_context3d))
+			if (_stage == null || FlashPlatform.hasAntiAliasing (_context3d))
 			{
 				renderer = new SingleGlyphRenderer(_context3d);  
 			}

@@ -140,7 +140,7 @@ package de.maxdidit.hardware.text.renderer
 			_context3d.setProgram(programPair);
 			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA)
 			
-			_context3d.setVertexBufferAt(0, _vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
+			_context3d.setVertexBufferAt(0, _vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 			_context3d.setVertexBufferAt(1, _vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_4);
 			_context3d.setVertexBufferAt(2, _vertexBuffer, 7, Context3DVertexBufferFormat.FLOAT_4);
 			

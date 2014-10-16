@@ -59,7 +59,7 @@ package de.maxdidit.hardware.text.renderer
 		public function retrieveHardwareTextRenderer():IHardwareTextRenderer  
 		{ 
 			var renderer:IHardwareTextRenderer
-			if (FlashPlatform.hasAntiAliasing (_context3d))
+			if (_stage == null || FlashPlatform.hasAntiAliasing (_context3d))
 			{
 				renderer = new SentenceRenderer (_context3d); 
 			}
