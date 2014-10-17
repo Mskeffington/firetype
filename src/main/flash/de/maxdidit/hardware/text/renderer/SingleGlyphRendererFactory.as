@@ -45,7 +45,7 @@ package de.maxdidit.hardware.text.renderer
 		// Constructor 
 		/////////////////////// 
 		 
-		public function SingleGlyphRendererFactory(context3d:Context3D, stage:Stage)  
+		public function SingleGlyphRendererFactory(context3d:Context3D, stage:Stage = null)  
 		{ 
 			_stage = stage;
 			_context3d = context3d; 

@@ -46,13 +46,13 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Constants 
 		///////////////////////
+		private static const FIELDS_PER_VERTEX:uint = 13;
+		private static const VALUES_PER_CONST_REGISTER:uint = 5;
 		
+		public static const MAX_CONSTANT_REGISTERS:uint = 128;
 		public static const MAX_VERTEXBUFFER_BYTES:uint = (256 << 9) << 9;
 		public static const MAX_INDEXBUFFER_BYTES:uint = (128 << 9) << 9;
-		static public const VALUES_PER_CONST_REGISTER:int = 8;
-		private static const GLYPHS_PER_BATCH:uint = 25;//128 / 5;   // 128 is the maximum of constatnt registers.  
-																	//n is the nubmer of constant registers we need per vertex
-																	//- 1 for the offset 
+		private static const GLYPHS_PER_BATCH:uint = MAX_CONSTANT_REGISTERS / VALUES_PER_CONST_REGISTER;
 		
 		/////////////////////// 
 		// Member Fields 
@@ -98,12 +98,12 @@ package de.maxdidit.hardware.text.renderer
 		protected function get fieldsPerVertex():uint
 		{
 			//we need x,y,z,rotation,alpha,
-			return 13;
+			return FIELDS_PER_VERTEX;
 		}
 		
 		protected function get fieldsPerConstant():uint
 		{
-			return 5;
+			return VALUES_PER_CONST_REGISTER;
 		}
 		
 		protected function get vertexShaderCode():String
@@ -181,7 +181,6 @@ package de.maxdidit.hardware.text.renderer
 					}
 				}
 			}
-			
 		}
 		
 		//TODO: later optimization.  match up partial words inside of larger words and only create new index buffers
