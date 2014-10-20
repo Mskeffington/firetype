@@ -49,7 +49,6 @@ package de.maxdidit.hardware.text.starling
 			{
 				renderer.context3d = Starling.current.context;
 			}
-			this.clearHardwareGlyphCache();
 		}
 		
 		

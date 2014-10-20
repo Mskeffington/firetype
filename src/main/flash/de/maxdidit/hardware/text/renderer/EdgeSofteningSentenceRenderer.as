@@ -171,7 +171,7 @@ package de.maxdidit.hardware.text.renderer
 						{
 							//create the buffer 
 							vertexAndIndex = createBuffers (wordSubstring);
-							_bufferCache[currentWord] = vertexAndIndex;
+							_bufferCache[wordSubstring] = vertexAndIndex;
 						}
 						
 						//set the vertex buffers
