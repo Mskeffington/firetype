@@ -1,26 +1,35 @@
-/************************************************************************************
- *	
- *	About: Copyright (c) Crestron Electronics, Inc.  All rights reserved.
- *	
- *	Use of this source code is subject to the terms of the Crestron Software
- *	License Agreement under which you licensed this source code.
- *	If you did not accept the terms of the license agreement,
- *	you are not authorized to use this source code. For the terms of the license.
- *	please see the license agreement between you and Crestron at 
- *  http://www.crestron.com/sla.
- *
- *	This source code may be used only for the purpose of developing software for
- *	Crestron Devices and may not be used for any other purpose.  You may not 
- *  sublicense, publish, or distribute this source code in any way.
- *	THE SOURCE CODE IS PROVIDED "AS IS", WITH NO WARRANTIES OR INDEMNITIES.
- *
- ************************************************************************************/
+/*
+   'firetype' is an ActionScript 3 library which loads font files and renders characters via the GPU.
+   Copyright ©2013 Max Knoblich
+   www.maxdid.it
+   me@maxdid.it
+
+   This file is part of 'firetype' by Max Did It.
+
+   'firetype' is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   'firetype' is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public License
+   along with 'firetype'.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 package de.maxdidit.hardware.text.renderer 
 {
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
 	
+	/**
+	 * 
+	 * ...
+	 * @author Michael Skeffington
+	 */
 	public class VertexIndexUnion 
 	{
 		protected var _indexBuffer:IndexBuffer3D;
@@ -28,74 +37,79 @@ package de.maxdidit.hardware.text.renderer
 		
 		protected var _flag:Boolean = true;
 		protected var _numTriangles:uint = 0;
+		protected var _indexBufferData:Vector.<uint>;
+		protected var _vertexBufferData:Vector.<Number>;
+		protected var _fieldsPerVertex:uint;
 		
-		/**
-		 *	...
-		 **/
-		public function VertexIndexUnion($vertexBuffer:VertexBuffer3D, $indexBuffer:IndexBuffer3D) 
+		/////////////////////// 
+		// Constructor 
+		/////////////////////// 
+		public function VertexIndexUnion($vertexBufferData:Vector.<Number>, $indexBufferData:Vector.<uint>, fieldsPerVertex:uint) 
 		{
-			_vertexBuffer = $vertexBuffer;
-			_indexBuffer = $indexBuffer;
+			_fieldsPerVertex = fieldsPerVertex;
+			_indexBufferData = $indexBufferData;
+			_vertexBufferData = $vertexBufferData;
 		}
 		
-		/** 
-		 * @InheritDoc
-		 * @see $(Class)
-		 * 
-		 * ...
-		 **/
+		/////////////////////// 
+		// Member Properties 
+		///////////////////////
 		public function get numTriangles():uint 
 		{
-			return _numTriangles;
+			return _indexBufferData.length / 3;
 		}
-		
-		public function set numTriangles(value:uint):void 
-		{
-			_numTriangles = value;
-		}
-		
-		/**
-		 * ...
-		 * @return	...
-		 **/
 		
 		public function get indexBuffer():IndexBuffer3D 
 		{
 			return _indexBuffer;
 		}
 		
-		/**
-		 * ...
-		 * @return	...
-		 **/
+		public function set indexBuffer(value:IndexBuffer3D):void 
+		{
+			_indexBuffer = value;
+			indexBuffer.uploadFromVector(_indexBufferData, 0, _indexBufferData.length);
+		}
 		
 		public function get vertexBuffer():VertexBuffer3D 
 		{
 			return _vertexBuffer;
 		}
 		
-		/**
-		 * ...
-		 * @return	...
-		 **/
+		public function set vertexBuffer(value:VertexBuffer3D):void 
+		{
+			_vertexBuffer = value;
+			_vertexBuffer.uploadFromVector(_vertexBufferData, 0, _vertexBufferData.length / fieldsPerVertex); 
+		}
 		
 		public function get flag():Boolean 
 		{
 			return _flag;
 		}
 		
-		
-		/**
-		 * ...
-		 * @param	...
-		 **/
-		
 		public function set flag(value:Boolean):void 
 		{
 			_flag = value;
 		}
 		
+		public function get indexBufferData():Vector.<uint> 
+		{
+			return _indexBufferData;
+		}
 		
+		public function get vertexBufferData():Vector.<Number> 
+		{
+			return _vertexBufferData;
+		}
+		
+		public function get numVertices ():uint
+		{
+			return _vertexBufferData.length / _fieldsPerVertex;
+		}
+		
+		public function get fieldsPerVertex():uint 
+		{
+			return _fieldsPerVertex;
+		}
 		
 		
 	}

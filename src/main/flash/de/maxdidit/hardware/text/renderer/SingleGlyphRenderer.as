@@ -148,7 +148,6 @@ package de.maxdidit.hardware.text.renderer
 				}
 			}
 		}
-		
 		public override function clear():void
 		{
 			_vertexData.length = 0;

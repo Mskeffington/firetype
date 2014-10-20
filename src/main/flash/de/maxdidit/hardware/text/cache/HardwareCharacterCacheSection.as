@@ -91,21 +91,16 @@ package de.maxdidit.hardware.text.cache
 			instances.push(hardwareGlyphInstance); 
 		} 
 		 
-		public function addHardwareGlyph(glyph:HardwareGlyph):Boolean 
-		{ 
-			return _renderer.addHardwareGlyph(glyph); 
-		} 
-		 
+		public function get renderer():IHardwareTextRenderer 
+		{
+			return _renderer;
+		}
+		
 		public function render(textColorMap:TextColorMap):void  
 		{ 
 			_renderer.render(_instanceMap, textColorMap); 
 		} 
-		 
-		public function clearBufferData():void 
-		{ 
-			_renderer.clear(); 
-		} 
-		 
+		
 		public function clearInstances():void  
 		{ 
 			deleteMap(_instanceMap); 

@@ -46,15 +46,12 @@ package de.maxdidit.hardware.text.renderer
 		///////////////////////
 		
 		public function HardwareTextRenderer($context3d:Context3D) 
-		{
-			_context3d = $context3d; 
-			
+		{			
 			// init shaders
 			vertexAssembly.assemble(Context3DProgramType.VERTEX, vertexShaderCode); 
-			fragmentAssembly.assemble(Context3DProgramType.FRAGMENT, fragmentShaderCode); 
-			 
-			programPair = _context3d.createProgram(); 
-			programPair.upload(vertexAssembly.agalcode, fragmentAssembly.agalcode); 
+			fragmentAssembly.assemble (Context3DProgramType.FRAGMENT, fragmentShaderCode); 
+			
+			context3d = $context3d; 
 		}
 		
 		///////////////////////
@@ -74,6 +71,16 @@ package de.maxdidit.hardware.text.renderer
 		protected function get fragmentShaderCode():String
 		{
 			throw new Error("fragmentShaderCode has not been implemented yet. Please extend HardwareTextRenderer and implement this property.");
+		}
+		
+		public function set context3d (context:Context3D):void
+		{
+			_context3d = context;
+			
+			programPair = _context3d.createProgram(); 
+			programPair.upload (vertexAssembly.agalcode, fragmentAssembly.agalcode); 
+			
+			_buffersDirty = true;
 		}
 		
 		///////////////////////

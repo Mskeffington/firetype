@@ -41,11 +41,15 @@ package de.maxdidit.hardware.text.starling
 		// Constructor
 		///////////////////////
 		
-		public function FiretypeStarlingTextField(cache:HardwareCharacterCache = null)
+		public function FiretypeStarlingTextField(cache:StarlingHardwareCharacterCache = null)
 		{
-			Starling.current.addEventListener(Event.CONTEXT3D_CREATE, handleContext3DCreated);
-			
 			_cache = cache;
+			
+			if (!_cache)
+			{
+				//starling cache needs to handle its own handling of lost context
+				_cache = new StarlingHardwareCharacterCache(new SingleGlyphRendererFactory(Starling.current.context, Starling.current.nativeStage));
+			}
 			
 			if (Starling.current.context)
 			{
@@ -298,7 +302,7 @@ package de.maxdidit.hardware.text.starling
 				if (_hardwareText)
 				{
 					_hardwareText.standardFormat.vertexDistance = _vertexDistance;
-					_hardwareText.cache.clearHardwareGlyphCache();
+					_hardwareText.cache.clearInstanceCache (_hardwareText);
 					_hardwareText.flagForUpdate();
 				}
 			}
@@ -315,7 +319,7 @@ package de.maxdidit.hardware.text.starling
 				support.finishQuadBatch();
 				
 				_hardwareText.calculateTransformations(support.mvpMatrix3D, true);
-				_hardwareText.cache.render();
+				_hardwareText.cache.render(_hardwareText);
 				
 				// Reset vertex buffers
 				Starling.current.context.setVertexBufferAt(0, null);
@@ -333,34 +337,6 @@ package de.maxdidit.hardware.text.starling
 			}
 			
 			_hardwareText.update(cacheGlyphs);
-		}
-		
-		///////////////////////
-		// Event Handler
-		///////////////////////
-		
-		private function handleContext3DCreated(e:Event):void
-		{
-			if (_hardwareText.cache)
-			{
-				_hardwareText.cache.clearHardwareGlyphCache();
-				_hardwareText.cache.clearInstanceCache();
-			}
-			
-			_hardwareText = new HardwareText(Starling.current.context, _cache);
-			_hardwareText.scaleY = -0.025;
-			_hardwareText.scaleX = 0.025;
-			
-			_hardwareText.standardFormat.color = _color;
-			_hardwareText.standardFormat.textAlign = _textAlign;
-			_hardwareText.standardFormat.scale = _textScale;
-			_hardwareText.standardFormat.shearX = _textSkewX;
-			_hardwareText.standardFormat.shearY = _textSkewY;
-			_hardwareText.standardFormat.font = _font;
-			_hardwareText.standardFormat.vertexDistance = _vertexDistance;
-			
-			_hardwareText.width = width;
-			_hardwareText.text = _text;
 		}
 	
 	}

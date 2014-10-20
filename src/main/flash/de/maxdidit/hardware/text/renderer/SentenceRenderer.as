@@ -37,8 +37,10 @@ package de.maxdidit.hardware.text.renderer
 	import flash.display3D.VertexBuffer3D;
 	import flash.utils.Dictionary;
 	import starling.utils.VertexData;
+	
 	/**
 	 * this renderer will render as many characters as it can in a single text field.
+	 * 
 	 * @author Michael Skeffington
 	 */
 	public class SentenceRenderer implements IHardwareTextRenderer
@@ -77,14 +79,11 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		public function SentenceRenderer($context3d:Context3D)
 		{
-			_context3d = $context3d; 
-			
 			// init shaders
 			_vertexAssembly.assemble(Context3DProgramType.VERTEX, vertexShaderCode); 
-			_fragmentAssembly.assemble(Context3DProgramType.FRAGMENT, fragmentShaderCode); 
-			 
-			_programPair = _context3d.createProgram(); 
-			_programPair.upload(_vertexAssembly.agalcode, _fragmentAssembly.agalcode); 
+			_fragmentAssembly.assemble (Context3DProgramType.FRAGMENT, fragmentShaderCode); 
+			
+			context3d = $context3d; 
 			
 			_fallbackTextColor = new TextColor(null, 0xFFFFFFFF);
 		}
@@ -114,6 +113,23 @@ package de.maxdidit.hardware.text.renderer
  			//transform v0.alpha by (distance from the edge / thickness of border)
 			return "mov oc, v0";
  		}
+		
+		public function set context3d (context:Context3D):void
+		{
+			_context3d = context;
+			
+			_programPair = _context3d.createProgram(); 
+			_programPair.upload (_vertexAssembly.agalcode, _fragmentAssembly.agalcode); 
+			
+			for each (var bufferUnion:VertexIndexUnion in _bufferCache)
+			{
+				var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
+				var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
+				
+				bufferUnion.vertexBuffer = vertexBuffer;
+				bufferUnion.indexBuffer = indexBuffer;
+			}
+		}
 		
 		/////////////////////// 
 		// Member Functions 
@@ -195,14 +211,13 @@ package de.maxdidit.hardware.text.renderer
 				numTriangles += glyph.numTriangles;
 			}
 			
-			var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(vertexData.length / fieldsPerVertex, fieldsPerVertex); 
-			vertexBuffer.uploadFromVector(vertexData, 0, vertexData.length / fieldsPerVertex); 
-			 
-			var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(indexData.length); 
-			indexBuffer.uploadFromVector(indexData, 0, indexData.length);
+			var bufferUnion:VertexIndexUnion = new VertexIndexUnion(vertexData, indexData, fieldsPerVertex);
+
+			var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
+			var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
 			
-			var bufferUnion:VertexIndexUnion = new VertexIndexUnion(vertexBuffer,indexBuffer);
-			bufferUnion.numTriangles = indexData.length / 3;
+			bufferUnion.vertexBuffer = vertexBuffer;
+			bufferUnion.indexBuffer = indexBuffer;
 			
 			return bufferUnion;
 		}

@@ -85,7 +85,7 @@ package de.maxdidit.hardware.text
 			this._cache = cache;
 			if (!_cache)
 			{
-				_cache = new HardwareCharacterCache(new SingleGlyphRendererFactory(context3D));
+				_cache = new HardwareCharacterCache(new SingleGlyphRendererFactory(context3D, null));
 			}
 			this._cache.addClient(this);
 			
@@ -105,6 +105,10 @@ package de.maxdidit.hardware.text
 		/////////////////////// 
 		// Member Properties 
 		/////////////////////// 
+		public function render ():void
+		{
+			_cache.render (this);
+		}
 		
 		public function get cache():HardwareCharacterCache
 		{
@@ -381,7 +385,7 @@ package de.maxdidit.hardware.text
 							
 							glyphInstance.hardwareGlyph = hardwareGlyph;
 							
-							cache.registerGlyphInstance(glyphInstance, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.textColor);
+							cache.registerGlyphInstance(this, glyphInstance, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.textColor);
 						}
 					}
 				}

@@ -25,6 +25,7 @@ package de.maxdidit.hardware.text.renderer
 	import de.maxdidit.hardware.font.data.tables.truetype.glyf.contours.Vertex; 
 	import de.maxdidit.hardware.font.HardwareGlyph; 
 	import de.maxdidit.hardware.text.cache.TextColorMap; 
+	import flash.display3D.Context3D;
 	 
 	/** 
 	 * ... 
@@ -34,8 +35,9 @@ package de.maxdidit.hardware.text.renderer
 	{ 
 		function addHardwareGlyph(glyph:HardwareGlyph):Boolean; 
 		function render(instanceMap:Object, textColorMap:TextColorMap):void; 
-		 
+		//function getBuffers (instanceMap:Object, textColorMap:TextColorMap):void;
 		function clear():void; 
+		function set context3d(context:Context3D):void;
 	} 
 	 
 } 

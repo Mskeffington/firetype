@@ -25,6 +25,7 @@ package de.maxdidit.hardware.font
 	import de.maxdidit.hardware.font.data.tables.truetype.glyf.contours.Vertex;
 	import de.maxdidit.hardware.font.data.tables.truetype.glyf.Glyph;
 	import de.maxdidit.hardware.font.triangulation.ITriangulator;
+	import de.maxdidit.hardware.text.renderer.IHardwareTextRenderer;
 	import de.maxdidit.list.CircularLinkedList;
 	import de.maxdidit.list.elements.UnsignedIntegerListElement;
 	import de.maxdidit.math.AxisAlignedBoundingBox;
@@ -55,7 +56,7 @@ package de.maxdidit.hardware.font
 		private var _glyphIndex:uint;
 		private var _glyph:Glyph;
 		
-		private var _cacheSectionIndex:uint;
+		protected var _renderer:IHardwareTextRenderer;
 		
 		// bounding box
 		private var _boundingBox:AxisAlignedBoundingBox;
@@ -136,14 +137,14 @@ package de.maxdidit.hardware.font
 			_glyphIndex = value;
 		}
 		
-		public function get cacheSectionIndex():uint
+		public function get renderer():IHardwareTextRenderer 
 		{
-			return _cacheSectionIndex;
+			return _renderer;
 		}
 		
-		public function set cacheSectionIndex( value:uint ):void
+		public function set renderer (value:IHardwareTextRenderer):void
 		{
-			_cacheSectionIndex = value;
+			_renderer = value;
 		}
 		
 		// glyph 

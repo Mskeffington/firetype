@@ -48,6 +48,7 @@ package de.maxdidit.hardware.text.cache
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix3D;
+	import flash.utils.Dictionary;
 	
 	/**
 	 * ...
@@ -59,11 +60,12 @@ package de.maxdidit.hardware.text.cache
 		// Member Fields 
 		/////////////////////// 
 		
-		//private var _characterCache:Object = new Object(); 
 		private var _glyphCache:Object = new Object();
 		
 		private var _rendererFactory:IHardwareTextRendererFactory;
 		private var _sections:Vector.<HardwareCharacterCacheSection>;
+		protected var _renderers:Vector.<IHardwareTextRenderer>;
+		private var _sectionsByText:Dictionary = new Dictionary (true);
 		
 		private var _glyphBuilder:IGlyphBuilder;
 		
@@ -88,6 +90,7 @@ package de.maxdidit.hardware.text.cache
 			}
 			
 			_sections = new Vector.<HardwareCharacterCacheSection>();
+			_renderers = new Vector.<IHardwareTextRenderer>();
 			
 			_clientTexts = new Vector.<HardwareText>();
 			
@@ -129,47 +132,95 @@ package de.maxdidit.hardware.text.cache
 		// Member Functions 
 		/////////////////////// 
 		
-		private function addPathsToSection(charCode:uint, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>):HardwareGlyph
+		private function createGlyph(charCode:uint, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>, hardwareText:HardwareText = null):HardwareGlyph
 		{
 			var result:HardwareGlyph;
-			var section:HardwareCharacterCacheSection;
 			
 			// create hardware glyph
 			result = _glyphBuilder.buildGlyph(paths, originalPaths);
 			result.charCode = charCode;
 			
-			// insert into section 
-			const l:uint = _sections.length;
-			for (var i:uint = 0; i < l; i++)
-			{
-				section = _sections[i];
-				
-				if (section.addHardwareGlyph(result))
-				{
-					result.cacheSectionIndex = i;
-					return result;
-				}
-			}
-			
-			section = new HardwareCharacterCacheSection(_rendererFactory.retrieveHardwareTextRenderer());
-			_sections.push(section);
-			
-			if (section.addHardwareGlyph(result))
-			{
-				result.cacheSectionIndex = l;
-			}
-			else
-			{
-				throw new Error("Can't render glyph. Glyph polygon data does not fit into buffers. Try increasing the vertex distance.");
-			}
+			result.renderer = addGlyphToRenderer (result);
 			
 			return result;
 		}
 		
-		public function registerGlyphInstance(hardwareGlyphInstance:HardwareGlyphInstance, font:HardwareFont, vertexDistance:Number, color:TextColor):void
+		public function addGlyphToRenderer (hardwareGlyph:HardwareGlyph):IHardwareTextRenderer
 		{
-			var section:HardwareCharacterCacheSection = _sections[hardwareGlyphInstance.hardwareGlyph.cacheSectionIndex];
-			section.registerGlyphInstance(hardwareGlyphInstance, font, vertexDistance, color);
+			var renderer:IHardwareTextRenderer;
+			
+			// insert into renderer 
+			const l:uint = _renderers.length;
+			for (var i:uint = 0; i < l; i++)
+			{
+				renderer = _renderers[i];
+				if (renderer.addHardwareGlyph(hardwareGlyph))
+				{
+					return renderer;
+				}
+			}
+			
+			//lets try and reuse renderers if we can
+			renderer = _rendererFactory.retrieveHardwareTextRenderer();
+			
+			//add this renderer to the cache of renderers
+			_renderers.push (renderer);
+			
+			if (!renderer.addHardwareGlyph(hardwareGlyph))
+			{
+				throw new Error ("Can't render glyph. Glyph polygon data does not fit into buffers. Try increasing the vertex distance.");
+				return null;
+			}
+			
+			return renderer;
+		}
+		
+		private function getSection (hardwareGlyph:HardwareGlyph, hardwareText:HardwareText = null):HardwareCharacterCacheSection
+		{
+			var textInstanceSections:Vector.<HardwareCharacterCacheSection>;
+			var section:HardwareCharacterCacheSection;
+			var renderer:IHardwareTextRenderer = hardwareGlyph.renderer;
+			
+			if (renderer == null)
+			{
+				throw new Error("Can't render glyph. Glyph polygon data does not fit into buffers. Try increasing the vertex distance.");
+				return null;
+			}
+			
+			if (hardwareText != null)
+			{
+				textInstanceSections = _sectionsByText[hardwareText]; 
+			}
+			else 
+			{
+				textInstanceSections = _sections;
+			}
+			
+			//get the existing section by renderer 
+			const l:uint = textInstanceSections.length;
+			for (var i:uint = 0; i < l; i++)
+			{
+				section = textInstanceSections[i];
+				
+				if (section.renderer == renderer)
+				{
+					return section;
+				}
+			}
+			
+			//create a new section for this renderer
+			section = new HardwareCharacterCacheSection(renderer);
+			
+			//add this section to the text sections
+			textInstanceSections.push (section);
+			
+			return section;
+		}
+		
+		public function registerGlyphInstance(hardwareText:HardwareText, hardwareGlyphInstance:HardwareGlyphInstance, font:HardwareFont, vertexDistance:uint, textColor:TextColor):void
+		{
+			var section:HardwareCharacterCacheSection = getSection (hardwareGlyphInstance.hardwareGlyph, hardwareText);
+			section.registerGlyphInstance(hardwareGlyphInstance, font, vertexDistance, textColor);
 		}
 		
 		public function cacheHardwareCharactersByTextFormat(characters:String, format:HardwareTextFormat):void
@@ -208,38 +259,70 @@ package de.maxdidit.hardware.text.cache
 			}
 		}
 		
-		public function render():void
+		public function render(hardwareText:HardwareText = null):void
 		{
-			const cl:uint = _clientTexts.length;
-			for (var i:uint = 0; i < cl; i++)
+			var section:HardwareCharacterCacheSection
+			if ( hardwareText != null)
 			{
-				_clientTexts[i].update ();
-				//_clientTexts[i].ren
+				//this is a hack... no?
+				hardwareText.update ();
+				
+				for each (section in _sectionsByText[hardwareText])
+				{
+					section.render (_textColorMap);
+				}
 			}
-			
-			const l:uint = _sections.length;
-			for (i = 0; i < l; i++)
+			else
 			{
-				var section:HardwareCharacterCacheSection = _sections[i];
-				section.render(_textColorMap);
+				const cl:uint = _clientTexts.length;
+				for (var i:uint = 0; i < cl; i++)
+				{
+					_clientTexts[i].update ();
+				}
+			
+				const l:uint = _sections.length;
+				for (i = 0; i < l; i++)
+				{
+					section = _sections[i];
+					section.render(_textColorMap);
+				}
 			}
 		}
 		
-		public function clearInstanceCache():void
+		public function clearInstanceCache(hardwareText:HardwareText = null):void
 		{
-			const l:uint = _sections.length;
-			for (var i:uint = 0; i < l; i++)
+			var i:uint;
+			var sections:Vector.<HardwareCharacterCacheSection>;
+			var section:HardwareCharacterCacheSection;
+			if ( hardwareText != null)
 			{
-				var section:HardwareCharacterCacheSection = _sections[i];
-				section.clearInstances();
+				sections = _sectionsByText[hardwareText];
+				const len:uint = sections.length;
+				for (i = 0; i < len; i++)
+				{
+					section = sections[i];
+					section.clearInstances ();
+				}
+				hardwareText.flagForUpdate ();
 			}
-			
-			flagAllClientTextsForUpdate();
+			else
+			{
+				sections = _sections;
+				const l:uint = sections.length;
+				for (i = 0; i < l; i++)
+				{
+					section = sections[i];
+					section.clearInstances();
+				}
+				
+				flagAllClientTextsForUpdate ();
+			}
 		}
 		
 		public function addClient(hardwareText:HardwareText):void
 		{
-			_clientTexts.push(hardwareText);
+			_clientTexts.push (hardwareText);
+			_sectionsByText[hardwareText] = new Vector.<HardwareCharacterCacheSection>();
 		}
 		
 		public function removeClient(hardwareText:HardwareText):void
@@ -250,7 +333,22 @@ package de.maxdidit.hardware.text.cache
 				return;
 			}
 			
-			_clientTexts.splice(index, 1);
+			_clientTexts.splice (index, 1);
+			
+			//delete all the sections associated with this text
+			var sections:Vector.<HardwareCharacterCacheSection>;
+			var section:HardwareCharacterCacheSection;
+			const l:uint = sections.length;
+			for (var i:uint = 0; i < l; i++)
+			{
+				section = sections[i];
+				section.clearInstances ();
+			}
+			sections.splice (0, l);
+			
+			//clean up the keys
+			_sectionsByText[hardwareText] = null;
+			delete _sectionsByText[hardwareText];
 		}
 		
 		public function getCachedHardwareGlyph(uniqueIdentifier:String, subdivisions:uint, index:uint):HardwareGlyph
@@ -276,25 +374,26 @@ package de.maxdidit.hardware.text.cache
 			return hardwareGlyph;
 		}
 		
-		public function addPathsAsHardwareGlyph(charCode:uint, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>, font:HardwareFont, vertexDistance:Number, glyphID:int):HardwareGlyph
+		public function addPathsAsHardwareGlyph(characterCode:int, paths:Vector.<Vector.<Vertex>>, originalPaths:Vector.<Vector.<Vertex>>, font:HardwareFont, vertexDistance:Number, glyphId:int):HardwareGlyph
 		{
-			var glyph:HardwareGlyph = addPathsToSection(charCode, paths, originalPaths);
-			addHardwareGlyphToCache(glyph, font, vertexDistance, glyphID);
+			var glyph:HardwareGlyph = createGlyph(characterCode, paths, originalPaths);
+			addHardwareGlyphToCache(glyph, font, vertexDistance, glyphId);
 			
 			return glyph;
 		}
 		
+		//DONT DO THIS!
 		public function clearHardwareGlyphCache():void
 		{
-			_glyphCache = new Object();
-			
-			const l:uint = _sections.length;
+			_glyphCache = new Object ();
+
+			const l:uint = _renderers.length;
 			for (var i:uint = 0; i < l; i++)
 			{
-				_sections[i].clearBufferData();
+				_renderers[i].clear();
 			}
 			
-			flagAllClientTextsForUpdate();
+			flagAllClientTextsForUpdate ();
 		}
 		
 		private function flagAllClientTextsForUpdate():void
