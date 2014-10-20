@@ -33,11 +33,10 @@ package de.maxdidit.hardware.text.renderer
 	 */ 
 	public interface IHardwareTextRenderer  
 	{ 
+		function set context3d(context:Context3D):void;
 		function addHardwareGlyph(glyph:HardwareGlyph):Boolean; 
 		function render(instanceMap:Object, textColorMap:TextColorMap):void; 
-		//function getBuffers (instanceMap:Object, textColorMap:TextColorMap):void;
 		function clear():void; 
-		function set context3d(context:Context3D):void;
 	} 
 	 
 } 

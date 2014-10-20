@@ -35,7 +35,7 @@ package de.maxdidit.hardware.text.renderer
 		protected var _indexBuffer:IndexBuffer3D;
 		protected var _vertexBuffer:VertexBuffer3D;
 		
-		protected var _flag:Boolean = true;
+		protected var _dirtyFlag:Boolean = true;
 		protected var _numTriangles:uint = 0;
 		protected var _indexBufferData:Vector.<uint>;
 		protected var _vertexBufferData:Vector.<Number>;
@@ -81,14 +81,14 @@ package de.maxdidit.hardware.text.renderer
 			_vertexBuffer.uploadFromVector(_vertexBufferData, 0, _vertexBufferData.length / fieldsPerVertex); 
 		}
 		
-		public function get flag():Boolean 
+		public function get dirtyFlag():Boolean 
 		{
-			return _flag;
+			return _dirtyFlag;
 		}
 		
-		public function set flag(value:Boolean):void 
+		public function set dirtyFlag(value:Boolean):void 
 		{
-			_flag = value;
+			_dirtyFlag = value;
 		}
 		
 		public function get indexBufferData():Vector.<uint> 

@@ -72,8 +72,8 @@ package de.maxdidit.hardware.text.renderer
 		
 		protected var _fallbackTextColor:TextColor;
 		
+		//both of these shoud be organized as [vertex distance][font][character]
 		protected var _bufferCache:Dictionary = new Dictionary (true);
-		
 		protected var _letterCache:Dictionary = new Dictionary (true);
 		
 		/////////////////////// 
@@ -125,11 +125,7 @@ package de.maxdidit.hardware.text.renderer
 			
 			for each (var bufferUnion:VertexIndexUnion in _bufferCache)
 			{
-				var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
-				var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
-				
-				bufferUnion.vertexBuffer = vertexBuffer;
-				bufferUnion.indexBuffer = indexBuffer;
+				bufferUnion.dirtyFlag = true;
 			}
 		}
 		
@@ -213,13 +209,7 @@ package de.maxdidit.hardware.text.renderer
 				numTriangles += glyph.numTriangles;
 			}
 			
-			var bufferUnion:VertexIndexUnion = new VertexIndexUnion(vertexData, indexData, fieldsPerVertex);
-
-			var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
-			var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
-			
-			bufferUnion.vertexBuffer = vertexBuffer;
-			bufferUnion.indexBuffer = indexBuffer;
+			var bufferUnion:VertexIndexUnion = new VertexIndexUnion (vertexData, indexData, fieldsPerVertex);
 			
 			return bufferUnion;
 		}
@@ -332,6 +322,17 @@ package de.maxdidit.hardware.text.renderer
 							_bufferCache[wordSubstring] = vertexAndIndex;
 						}
 						
+						if (vertexAndIndex.dirtyFlag == true)
+						{
+							var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(vertexAndIndex.vertexBufferData.length / vertexAndIndex.fieldsPerVertex, vertexAndIndex.fieldsPerVertex); 
+							var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(vertexAndIndex.indexBufferData.length); 
+							
+							vertexAndIndex.vertexBuffer = vertexBuffer;
+							vertexAndIndex.indexBuffer = indexBuffer;
+							
+							vertexAndIndex.dirtyFlag = false;
+						}
+						
 						//set the vertex buffers
 						_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_3);
 						_context3d.setVertexBufferAt (1, vertexAndIndex.vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);//constant offset
@@ -348,7 +349,25 @@ package de.maxdidit.hardware.text.renderer
 		
 		public function clear():void
 		{
-			//iterate through all the stored buffers and delete them
+			for (var index:* in _bufferCache)
+			{
+				var bufferUnion:VertexIndexUnion = _bufferCache[index];
+				bufferUnion.indexBufferData.length = 0;
+				bufferUnion.vertexBufferData.length = 0;
+				
+				bufferUnion.vertexBuffer.dispose();
+				bufferUnion.indexBuffer.dispose();
+				_bufferCache[index] = null;
+				delete _bufferCache[index];
+			}
+			
+			for (var charCode:String in _letterCache)
+			{
+				_letterCache[charCode] = null;
+				delete _letterCache[charCode];
+			}
+			
+			_programPair.dispose ();
 		}
 	}
 

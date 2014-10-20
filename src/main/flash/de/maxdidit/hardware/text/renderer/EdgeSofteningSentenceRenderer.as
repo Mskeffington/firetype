@@ -174,6 +174,17 @@ package de.maxdidit.hardware.text.renderer
 							_bufferCache[wordSubstring] = vertexAndIndex;
 						}
 						
+						if (vertexAndIndex.dirtyFlag == true)
+						{
+							var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(vertexAndIndex.vertexBufferData.length / vertexAndIndex.fieldsPerVertex, vertexAndIndex.fieldsPerVertex); 
+							var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(vertexAndIndex.indexBufferData.length); 
+							
+							vertexAndIndex.vertexBuffer = vertexBuffer;
+							vertexAndIndex.indexBuffer = indexBuffer;
+							
+							vertexAndIndex.dirtyFlag = false;
+						}						
+						
 						//set the vertex buffers
 						_context3d.setVertexBufferAt (0, vertexAndIndex.vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_3);
 						_context3d.setVertexBufferAt (1, vertexAndIndex.vertexBuffer, 3, Context3DVertexBufferFormat.FLOAT_1);//constant offset
