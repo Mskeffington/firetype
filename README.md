@@ -356,6 +356,8 @@ _hardwareText.text = "You can make characters appear\n<format scale='1.5' vertex
 ```
 ![The text rendered with firetype.](http://www.max-did-it.com/projects/firetype/tutorial2_result4.png)
 
+**Note:** The stage3D profile for Adobe Air on mobile platforms doesnt support anti-aliasing triangles.  As a result, there is included a series of *edge softening* renderers that run an algorithm to remove jaggies from the glyphs.  This algorithm requires you to pass in a character cache which is explained in the section [How Should I Handle Longer Texts?](#how-should-i-handle-longer-texts).
+
 ### How Should I Handle Longer Texts?
 
 You can find an implementation of this tutorial at [FiretypeTutorial6.as](https://github.com/MaxDidIt/firetype/blob/master/src/test/flash/de/maxdidit/hardware/font/FiretypeTutorial6.as).
@@ -437,7 +439,7 @@ As of version 1.5.0, *firetype* offers a basic integration with the [Starling Fr
 
 You can find an implementation of this tutorial at [FiretypeStarlingTutorial.as](https://github.com/MaxDidIt/firetype/blob/master/src/test/flash/de/maxdidit/hardware/font/FiretypeStarlingTutorial.as) and [FiretypeStarlingGame.as](https://github.com/MaxDidIt/firetype/blob/master/src/test/flash/de/maxdidit/hardware/font/FiretypeStarlingGame.as).
 	
-If you use `FiretypeStarlingTextField`, you initialize your `Starling` object just like you would in any other Starling project. However, it is recommended that you set the `antiAliasing` property to something greater than 0 for better text rendering quality.
+If you use `FiretypeStarlingTextField`, you initialize your `Starling` object just like you would in any other Starling project. However, it is recommended that you set the `antiAliasing` property to something greater than 0 for better text rendering quality.  However, since the mobile profile for the Air player does not support anti-aliasing, if you plan to build your application for mobile devices, you will need to create a StarlingHardwareCharacterCache and pass it in to your FiretypeStarlingTextField.
 
 ```ActionScript
 _starling = new Starling(FiretypeStarlingGame, stage);
@@ -472,6 +474,13 @@ You can use the following properties of the `FiretypeStarlingTextField` object t
 * `vertexDistance`: Applies a value which indicates the level of detail in which the characters should be rendered. See [How Do I Control the Level of Detail of Characters](#how-do-i-control-the-level-of-detail-of-characters).
 
 You can use all methods shown in [How Do I Apply Formatting to Texts](#how-do-i-apply-formatting-to-texts) to apply further formatting to your texts. This way, you can apply `format` tags and font format objects to your text.
+
+You can also render multiple texts as shown in [How Should I Handle Longer Texts?](#how-should-i-handle-longer-texts) with the notable exception being that instead of creating a HardwareCharacterCache, you must create a StarlingHardwareCharacterCache.  This takes exactly the same set of arguments and functions the same way but will also gracefully recover from losing a reference to the Starling context.
+
+```ActionScript
+var cache:StarlingHardwareCharacterCache = new StarlingHardwareCharacterCache(new SingleGlyphRendererFactory(_context3d));
+var text:FiretypeStarlingTextField = new FiretypeStarlingTextField(cache);
+```
 
 ## Where Can I Find the *firetype* API Documentation?
 
