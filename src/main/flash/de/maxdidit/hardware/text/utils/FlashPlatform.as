@@ -1,30 +1,37 @@
-/************************************************************************************
- *	
- *	About: Copyright (c) Crestron Electronics, Inc.  All rights reserved.
- *	
- *	Use of this source code is subject to the terms of the Crestron Software
- *	License Agreement under which you licensed this source code.
- *	If you did not accept the terms of the license agreement,
- *	you are not authorized to use this source code. For the terms of the license.
- *	please see the license agreement between you and Crestron at 
- *  http://www.crestron.com/sla.
- *
- *	This source code may be used only for the purpose of developing software for
- *	Crestron Devices and may not be used for any other purpose.  You may not 
- *  sublicense, publish, or distribute this source code in any way.
- *	THE SOURCE CODE IS PROVIDED "AS IS", WITH NO WARRANTIES OR INDEMNITIES.
- *
- ************************************************************************************/
-
+/* 
+'firetype' is an ActionScript 3 library which loads font files and renders characters via the GPU. 
+Copyright ©2013 Max Knoblich 
+www.maxdid.it 
+me@maxdid.it 
+ 
+This file is part of 'firetype' by Max Did It. 
+  
+'firetype' is free software: you can redistribute it and/or modify 
+it under the terms of the GNU Lesser General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version. 
+  
+'firetype' is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU Lesser General Public License for more details. 
+ 
+You should have received a copy of the GNU Lesser General Public License 
+along with 'firetype'.  If not, see <http://www.gnu.org/licenses/>. 
+*/ 
+ 
 package de.maxdidit.hardware.text.utils 
 {
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DProfile;
 	import flash.system.Capabilities;
 	
+	/**
+	 * ...
+	 * @author Michael Skeffington
+	 */
 	public class FlashPlatform 
 	{
-		
 		public static function hasAntiAliasing (context3d:Context3D):Boolean
 		{
 			if (context3d.profile == Context3DProfile.BASELINE_CONSTRAINED)
