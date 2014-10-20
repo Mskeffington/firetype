@@ -57,20 +57,7 @@ package de.maxdidit.hardware.text.renderer
 		// Member Fields 
 		/////////////////////// 
 		
-		// shader 
-		protected var _vertexAssembly:AGALMiniAssembler = new AGALMiniAssembler(); 
-		protected var _fragmentAssembly:AGALMiniAssembler = new AGALMiniAssembler(); 
-		protected var _programPair:Program3D; 
-		
-		
-		protected var _context3d:Context3D; 
 		protected var _stage:Stage; 
-		
-		private var _fallbackTextColor:TextColor;
-		
-		private var _bufferCache:Dictionary = new Dictionary (true);
-		
-		private var _letterCache:Dictionary = new Dictionary (true);
 		
 		/////////////////////// 
 		// Constructor 
@@ -85,6 +72,17 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Member Properties 
 		///////////////////////		
+		protected override function get fieldsPerVertex():uint
+		{
+			//we need x,y,z,rotation,alpha,
+			return FIELDS_PER_VERTEX;
+		}
+		
+		protected override function get fieldsPerConstant():uint
+		{
+			return VALUES_PER_CONST_REGISTER;
+		}
+		
 		protected override function get vertexShaderCode():String
  		{
 			/*

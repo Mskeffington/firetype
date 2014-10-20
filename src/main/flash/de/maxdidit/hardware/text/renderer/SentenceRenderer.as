@@ -70,11 +70,11 @@ package de.maxdidit.hardware.text.renderer
 		
 		protected var _context3d:Context3D; 
 		
-		private var _fallbackTextColor:TextColor;
+		protected var _fallbackTextColor:TextColor;
 		
-		private var _bufferCache:Dictionary = new Dictionary (true);
+		protected var _bufferCache:Dictionary = new Dictionary (true);
 		
-		private var _letterCache:Dictionary = new Dictionary (true);
+		protected var _letterCache:Dictionary = new Dictionary (true);
 		
 		/////////////////////// 
 		// Constructor 
