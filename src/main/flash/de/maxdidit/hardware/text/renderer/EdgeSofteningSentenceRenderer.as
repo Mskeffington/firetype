@@ -43,7 +43,7 @@ package de.maxdidit.hardware.text.renderer
 	 * 
 	 * @author Michael Skeffington
 	 */
-	public class EdgeSofteningSentenceRenderer implements IHardwareTextRenderer
+	public class EdgeSofteningSentenceRenderer extends SentenceRenderer implements IHardwareTextRenderer
 	{
 		/////////////////////// 
 		// Constants 
@@ -51,9 +51,6 @@ package de.maxdidit.hardware.text.renderer
 		private static const FIELDS_PER_VERTEX:uint = 13;
 		private static const VALUES_PER_CONST_REGISTER:uint = 5;
 		
-		public static const MAX_CONSTANT_REGISTERS:uint = 128;
-		public static const MAX_VERTEXBUFFER_BYTES:uint = (256 << 9) << 9;
-		public static const MAX_INDEXBUFFER_BYTES:uint = (128 << 9) << 9;
 		private static const GLYPHS_PER_BATCH:uint = uint(MAX_CONSTANT_REGISTERS / VALUES_PER_CONST_REGISTER);
 		
 		/////////////////////// 
@@ -82,30 +79,13 @@ package de.maxdidit.hardware.text.renderer
 		{
 			_stage = $stage;
 			
-			// init shaders
-			_vertexAssembly.assemble(Context3DProgramType.VERTEX, vertexShaderCode); 
-			_fragmentAssembly.assemble(Context3DProgramType.FRAGMENT, fragmentShaderCode); 
-			 
-			context3d = $context3d; 
-			
-			_fallbackTextColor = new TextColor (null, 0xFFFFFFFF);
+			super ($context3d);
 		}
 		
 		/////////////////////// 
 		// Member Properties 
-		///////////////////////
-		protected function get fieldsPerVertex():uint
-		{
-			//we need x,y,z,rotation,alpha,
-			return FIELDS_PER_VERTEX;
-		}
-		
-		protected function get fieldsPerConstant():uint
-		{
-			return VALUES_PER_CONST_REGISTER;
-		}
-		
-		protected function get vertexShaderCode():String
+		///////////////////////		
+		protected override function get vertexShaderCode():String
  		{
 			/*
 			return "mov vt3, va4.wzzx \n" + //create the mvp matrix
@@ -122,121 +102,11 @@ package de.maxdidit.hardware.text.renderer
 			"m44 op, vt0, vt3 \n" + //offset the point by the transpose alone the noraml
 			"mul v0, vc[va2.x], va3 \n"; // multiply color with alpha and pass it to fragment shader*/
  		}
- 		protected function get fragmentShaderCode():String
- 		{
- 			//transform v0.alpha by (distance from the edge / thickness of border)
-			return "mov oc, v0";
- 		}
-		
-		public function set context3d (context:Context3D):void
-		{
-			_context3d = context;
-			
-			_programPair = _context3d.createProgram(); 
-			_programPair.upload (_vertexAssembly.agalcode, _fragmentAssembly.agalcode); 
-			
-			for each (var bufferUnion:VertexIndexUnion in _bufferCache)
-			{
-				var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
-				var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
-				
-				bufferUnion.vertexBuffer = vertexBuffer;
-				bufferUnion.indexBuffer = indexBuffer;
-			}
-		}
 		
 		/////////////////////// 
 		// Member Functions 
 		/////////////////////// 		
-		protected function createConstantBuffer (word:String, instanceOffset:int, instanceMap:Object, textColorMap:TextColorMap):void
-		{				
-			var fallbackTextColor:TextColor = new TextColor();
-			var textColor:TextColor;
-			fallbackTextColor.alpha = 1;
-						
-			var charCount:uint = 0;
-			var curCharIdx:uint = 0;
-			var currentVectorIndex:uint = 0;
-			for (var colorId:String in instanceMap)
-			{
-				var color:Object = instanceMap[colorId];
-				
-				if (textColorMap.hasTextColorId(colorId))
-				{
-					textColor = textColorMap.getTextColorById(colorId);
-				}
-				else
-				{
-					textColor = fallbackTextColor;
-				}
-				if (textColor.alpha == 0)
-				{
-					textColor.alpha = 1;
-				}
-				
-				for each (var instances:Vector.<HardwareGlyphInstance>in color)
-				{
-					const l:uint = instances.length;
-					for (var i:uint = 0; i < l; i++)
-					{
-						if (charCount >= instanceOffset)
-						{
-							var currentInstance:HardwareGlyphInstance = instances[i];
-							
-							var constantVectorIndex:uint = curCharIdx * fieldsPerConstant;
-							_context3d.setProgramConstantsFromMatrix (Context3DProgramType.VERTEX, constantVectorIndex, currentInstance.globalTransformation, true);
-							_context3d.setProgramConstantsFromVector (Context3DProgramType.VERTEX, constantVectorIndex + 4, textColor.colorVector, 1);
-							curCharIdx++;
-						}	
-						
-						charCount ++;
-						if (curCharIdx >= GLYPHS_PER_BATCH)
-						{
-							return;
-						}
-					}
-				}
-			}
-		}
-		
-		//TODO: later optimization.  match up partial words inside of larger words and only create new index buffers
-		protected function createBuffers (word:String):VertexIndexUnion
-		{
-			var vertexData:Vector.<Number> = new Vector.<Number>();
-			var indexData:Vector.<uint> = new Vector.<uint>();
-			
-			var l:uint = word.length;
-			
-			if (l >= GLYPHS_PER_BATCH)
-			{
-				l = GLYPHS_PER_BATCH;
-			}
-			
-			var glyph:HardwareGlyph;
-			var character:String = "";
-			var numTriangles:uint = 0;
-			for (var i:int = 0; i < l; i++)
-			{
-				
-				glyph = _letterCache[word.charCodeAt(i)];
-				
-				addToIndexData (indexData, glyph.indices , vertexData.length / fieldsPerVertex);
-				addToVertexData (vertexData, glyph.vertices, i);
-				numTriangles += glyph.numTriangles;
-			}
-			
-			var bufferUnion:VertexIndexUnion = new VertexIndexUnion(vertexData, indexData, fieldsPerVertex);
-
-			var vertexBuffer:VertexBuffer3D = _context3d.createVertexBuffer(bufferUnion.vertexBufferData.length / bufferUnion.fieldsPerVertex, bufferUnion.fieldsPerVertex); 
-			var indexBuffer:IndexBuffer3D = _context3d.createIndexBuffer(bufferUnion.indexBufferData.length); 
-			
-			bufferUnion.vertexBuffer = vertexBuffer;
-			bufferUnion.indexBuffer = indexBuffer;
-			
-			return bufferUnion;
-		}
-		
-		protected function addToVertexData(vertexBufferData:Vector.<Number>, vertices:Vector.<Vertex>, constIndex:uint):void
+		protected override function addToVertexData(vertexBufferData:Vector.<Number>, vertices:Vector.<Vertex>, constIndex:uint):void
 		{
 			const l:uint = vertices.length;
 			
@@ -279,60 +149,7 @@ package de.maxdidit.hardware.text.renderer
 			}
 		}
 		
-		protected function addToIndexData(indexBufferData:Vector.<uint>, indices:Vector.<uint>, vertexOffset:uint):void
-		{
-			const l:uint = indices.length;
-			
-			if (l > MAX_INDEXBUFFER_BYTES)
-			{
-				//It is virtually impossible to overflow this buffer
-				return;
-			}
-			
-			var index:uint = indexBufferData.length;
-			
-			indexBufferData.length = index + l;
-			
-			for (var j:uint = 0; j < l; j++)
-			{
-				indexBufferData[index++] = indices[j] + vertexOffset;
-			}
-			
-		}
-		
-		protected function findWord (instanceMap:Object):String
-		{
-			var word:String = "";
-			for (var colorId:String in instanceMap)
-			{
-				var color:Object = instanceMap[colorId];
-				
-				for (var curCharacter:String in color)
-				{
-					
-					var instances:Vector.<HardwareGlyphInstance> = color[curCharacter];
-					var l:uint = instances.length;
-					for (var i:uint = 0; i < l; i++)
-					{
-						var currentInstance:HardwareGlyphInstance = instances[i];
-						word += String.fromCharCode(currentInstance.characterCode);
-					}
-				}
-			}
-			
-			return word;
-		}
-		
-		public function addHardwareGlyph(glyph:HardwareGlyph):Boolean 
-		{
-			if (_letterCache[glyph.charCode] == null)
-			{
-				_letterCache[glyph.charCode] = glyph;
-			}
-			return true;
-		}
-		
-		public function render(instanceMap:Object, textColorMap:TextColorMap):void
+		public override function render(instanceMap:Object, textColorMap:TextColorMap):void
 		{
 			_context3d.setProgram(_programPair);
 			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
@@ -374,10 +191,6 @@ package de.maxdidit.hardware.text.renderer
 			}
 		}
 		
-		public function clear():void
-		{
-			//iterate through all the stored buffers and delete them
-		}
 	}
 
 }

@@ -49,12 +49,14 @@ package de.maxdidit.hardware.text.renderer
 		// Constants 
 		///////////////////////
 		
+		public static const MAX_CONSTANT_REGISTERS:uint = 128;
 		public static const MAX_VERTEXBUFFER_BYTES:uint = (256 << 9) << 9;
 		public static const MAX_INDEXBUFFER_BYTES:uint = (128 << 9) << 9;
-		static public const VALUES_PER_CONST_REGISTER:int = 8;
-		private static const GLYPHS_PER_BATCH:uint = 25;//128 / 5;   // 128 is the maximum of constatnt registers.  
-																	//n is the nubmer of constant registers we need per vertex
-																	//- 1 for the offset 
+		
+		private static const VALUES_PER_CONST_REGISTER:int = 5;
+		private static const FIELDS_PER_VERTEX:uint = 5;
+		
+		private static const GLYPHS_PER_BATCH:uint = uint (MAX_CONSTANT_REGISTERS / VALUES_PER_CONST_REGISTER);
 		
 		/////////////////////// 
 		// Member Fields 
@@ -95,12 +97,12 @@ package de.maxdidit.hardware.text.renderer
 		protected function get fieldsPerVertex():uint
 		{
 			//we need x,y,z,rotation,alpha,
-			return 5;
+			return FIELDS_PER_VERTEX;
 		}
 		
 		protected function get fieldsPerConstant():uint
 		{
-			return 5;
+			return VALUES_PER_CONST_REGISTER;
 		}
 		
 		protected function get vertexShaderCode():String
@@ -226,6 +228,12 @@ package de.maxdidit.hardware.text.renderer
 		{
 			const l:uint = vertices.length;
 			
+			if (l * fieldsPerVertex > MAX_VERTEXBUFFER_BYTES)
+			{
+				//It is virtually impossible to overflow this buffer
+				return;
+			}
+			
 			var index:uint = vertexBufferData.length;
 			var newLength:uint = index + (l * fieldsPerVertex);
 			
@@ -247,6 +255,12 @@ package de.maxdidit.hardware.text.renderer
 		protected function addToIndexData(indexBufferData:Vector.<uint>, indices:Vector.<uint>, vertexOffset:uint):void
 		{
 			const l:uint = indices.length;
+			
+			if (l > MAX_INDEXBUFFER_BYTES)
+			{
+				//It is virtually impossible to overflow this buffer
+				return;
+			}
 			
 			var index:uint = indexBufferData.length;
 			
