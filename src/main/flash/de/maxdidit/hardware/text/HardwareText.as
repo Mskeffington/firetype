@@ -144,7 +144,7 @@ package de.maxdidit.hardware.text
 			{
 				_text = value;
 				
-				_cache.clearInstanceCache();
+				_cache.clearInstanceCache(this);
 				_layoutDirty = true;
 			}
 		}

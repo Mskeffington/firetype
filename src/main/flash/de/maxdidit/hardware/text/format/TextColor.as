@@ -34,7 +34,12 @@ package de.maxdidit.hardware.text.format
 		/////////////////////// 
 		 
 		private var _id:String; 
-		private var _color:Vector.<Number>; 
+		private var _colorVec:Vector.<Number>; 
+		private var _alpha:Number = 1;
+		private var _r:Number = 0x0;
+		private var _g:Number = 0x0;
+		private var _b:Number = 0x0;
+		private var _color:Number = 0x000000;
 		 
 		/////////////////////// 
 		// Constructor 
@@ -43,7 +48,7 @@ package de.maxdidit.hardware.text.format
 		public function TextColor(id:String = null, color:uint = 0x0)  
 		{ 
 			_id = id; 
-			_color = new Vector.<Number>(4, true); 
+			_colorVec = new Vector.<Number>(4, true); 
 			this.color = color; 
 		} 
 		 
@@ -55,7 +60,7 @@ package de.maxdidit.hardware.text.format
 		{ 
 			if (!_id) 
 			{ 
-				return "0x" + color.toString(16); 
+				return "0x" + _color.toString(16); 
 			} 
 			 
 			return _id; 
@@ -66,39 +71,53 @@ package de.maxdidit.hardware.text.format
 			_id = value; 
 		} 
 		 
+		public function get r():Number 
+		{ 
+			return _r; 
+		} 
+		public function get g():Number 
+		{ 
+			return _g; 
+		} 
+		public function get b():Number 
+		{ 
+			return _b; 
+		} 
 		public function get color():uint 
 		{ 
-			var colorUInt:uint = 0x0; 
-			 
-			colorUInt += uint(_color[3] * 255) << 24; // alpha 
-			colorUInt += uint(_color[0] * 255) << 16; // red 
-			colorUInt += uint(_color[1] * 255) << 8; // green 
-			colorUInt += uint(_color[2] * 255); // blue 
-			 
-			return colorUInt; 
+			return _color; 
 		} 
 		 
 		public function set color(value:uint):void 
 		{ 
-			_color[2] = Number(value & 0xFF) / 255; // red 
-			_color[1] = Number((value >> 8) & 0xFF) / 255; // green 
-			_color[0] = Number((value >> 16) & 0xFF) / 255; // blue 
-			_color[3] = Number((value >> 24) & 0xFF) / 255; // alpha 
+			
+			_r = Number(value & 0xFF) / 255; // red 
+			_g = Number((value >> 8) & 0xFF) / 255; // green 
+			_b = Number((value >> 16) & 0xFF) / 255; // blue 
+			_alpha =  Number ((value >> 24) & 0xFF) / 255; // alpha 
+			
+			_colorVec[2] = _r;
+			_colorVec[1] = _g;
+			_colorVec[0] = _b;
+			_colorVec[3] = _alpha;
+			_color = value;
 		} 
 		 
 		public function get colorVector():Vector.<Number> 
 		{ 
-			return _color; 
+			return _colorVec; 
 		} 
 		
 		public function set alpha (value:Number):void
 		{
-			_color[3] = value;
+			_colorVec[3] = value;
+			_alpha = value;
+			
 		}
 		
 		public function get alpha ():Number
 		{
-			return _color[3];
+			return _alpha;
 		}
 	} 
 } 

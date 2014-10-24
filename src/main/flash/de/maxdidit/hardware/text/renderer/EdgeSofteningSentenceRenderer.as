@@ -125,8 +125,8 @@ package de.maxdidit.hardware.text.renderer
 			{
 				var vertex:Vertex = vertices[i];
 				
-				var transposeX:Number = vertex.normalOffset / stageWidth;
-				var transposeY:Number = vertex.normalOffset / stageHeight;
+				var translateX:Number = vertex.normalOffset / stageWidth;
+				var translateY:Number = vertex.normalOffset / stageHeight;
 				
 				vertexBufferData[index++] = vertex.x;
 				vertexBufferData[index++] = vertex.y;
@@ -140,8 +140,8 @@ package de.maxdidit.hardware.text.renderer
 				vertexBufferData[index++] = 1;
 				vertexBufferData[index++] = vertex.alpha;
 				
-				vertexBufferData[index++] = vertex.nX * transposeX;
-				vertexBufferData[index++] = vertex.nY * transposeY;
+				vertexBufferData[index++] = vertex.nX * translateX;
+				vertexBufferData[index++] = vertex.nY * translateY;
 				vertexBufferData[index++] = 0;
 				vertexBufferData[index++] = 1;
 			}

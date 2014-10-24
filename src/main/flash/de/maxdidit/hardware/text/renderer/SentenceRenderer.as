@@ -48,7 +48,7 @@ package de.maxdidit.hardware.text.renderer
 		/////////////////////// 
 		// Constants 
 		///////////////////////
-		
+		67108864
 		public static const MAX_CONSTANT_REGISTERS:uint = 128;
 		public static const MAX_VERTEXBUFFER_BYTES:uint = (256 << 9) << 9;
 		public static const MAX_INDEXBUFFER_BYTES:uint = (128 << 9) << 9;
