@@ -58,7 +58,8 @@ package de.maxdidit.hardware.text.starling
 			
 			if (Starling.current.context)
 			{
-				_hardwareText = new HardwareText(Starling.current.context, cache);
+				_hardwareText = new HardwareText (Starling.current.context, cache);
+				_hardwareText.enableTextInstancing = true;
 				_hardwareText.scaleX = 0.025;
 				_hardwareText.scaleY = -0.025;
 				_hardwareText.standardFormat.color = _color;

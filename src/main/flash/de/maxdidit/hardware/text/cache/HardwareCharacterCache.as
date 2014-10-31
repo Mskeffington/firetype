@@ -280,7 +280,7 @@ package de.maxdidit.hardware.text.cache
 					_clientTexts[i].update ();
 				}
 			
-				const l:uint = _sections.length;
+				var l:uint = _sections.length;
 				for (i = 0; i < l; i++)
 				{
 					section = _sections[i];

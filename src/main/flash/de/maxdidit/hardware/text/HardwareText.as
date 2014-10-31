@@ -71,6 +71,8 @@ package de.maxdidit.hardware.text
 		
 		private var _layout:ILayout;
 		
+		private var _enableTextInstancing:Boolean = false;
+		
 		/////////////////////// 
 		// Constructor 
 		/////////////////////// 
@@ -107,7 +109,7 @@ package de.maxdidit.hardware.text
 		/////////////////////// 
 		public function render ():void
 		{
-			_cache.render (this);
+			_cache.render (_enableTextInstancing == true ? this : null);
 		}
 		
 		public function get cache():HardwareCharacterCache
@@ -144,7 +146,7 @@ package de.maxdidit.hardware.text
 			{
 				_text = value;
 				
-				_cache.clearInstanceCache(this);
+				_cache.clearInstanceCache(_enableTextInstancing == true ? this : null);
 				_layoutDirty = true;
 			}
 		}
@@ -271,6 +273,16 @@ package de.maxdidit.hardware.text
 			return _untransformedWidth;
 		}
 		
+		public function set enableTextInstancing(value:Boolean):void 
+		{
+			if (_enableTextInstancing != value)
+			{
+				cache.clearInstanceCache (_enableTextInstancing == true ? this : null);
+				_enableTextInstancing = value;
+			}
+		}
+		
+		
 		/////////////////////// 
 		// Member Functions 
 		/////////////////////// 
@@ -385,7 +397,7 @@ package de.maxdidit.hardware.text
 							
 							glyphInstance.hardwareGlyph = hardwareGlyph;
 							
-							cache.registerGlyphInstance(this, glyphInstance, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.textColor);
+							cache.registerGlyphInstance(_enableTextInstancing == true ? this : null, glyphInstance, glyphInstance.glyph.font, glyphInstance.vertexDistance, glyphInstance.textColor);
 						}
 					}
 				}
