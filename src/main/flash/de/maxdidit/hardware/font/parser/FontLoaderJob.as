@@ -83,8 +83,8 @@ package de.maxdidit.hardware.font.parser
 			_urlLoader.dataFormat = URLLoaderDataFormat.BINARY; 
 			 
 			_urlLoader.addEventListener(Event.COMPLETE, handleFontLoaded); 
-			_urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, handleFontLoadingFailed); 
-			_urlLoader.addEventListener(IOErrorEvent.IO_ERROR, handleFontLoadingFailed); 
+			_urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError); 
+			_urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onIOError); 
 			 
 			_urlLoader.load(urlRequest); 
 		} 
