@@ -199,14 +199,18 @@ package de.maxdidit.hardware.text.renderer
 			var glyph:HardwareGlyph;
 			var character:String = "";
 			var numTriangles:uint = 0;
+			var ccode:uint;
+			
 			for (var i:int = 0; i < l; i++)
 			{
-				
-				glyph = _letterCache[word.charCodeAt(i)];
-				
-				addToIndexData (indexData, glyph.indices , vertexData.length / fieldsPerVertex);
-				addToVertexData (vertexData, glyph.vertices, i);
-				numTriangles += glyph.numTriangles;
+				ccode = word.charCodeAt (i);
+				glyph = _letterCache[ccode];
+				if (glyph != null)
+				{
+					addToIndexData (indexData, glyph.indices , vertexData.length / fieldsPerVertex);
+					addToVertexData (vertexData, glyph.vertices, i);
+					numTriangles += glyph.numTriangles;
+				}
 			}
 			
 			var bufferUnion:VertexIndexUnion = new VertexIndexUnion (vertexData, indexData, fieldsPerVertex);
@@ -298,7 +302,6 @@ package de.maxdidit.hardware.text.renderer
 		public function render(instanceMap:Object, textColorMap:TextColorMap):void
 		{
 			_context3d.setProgram(_programPair);
-			_context3d.setBlendFactors (Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
 			
 			for each (var font:Object in instanceMap)
 			{
@@ -306,7 +309,7 @@ package de.maxdidit.hardware.text.renderer
 				{
 					//figure out what the string says.
 					var currentWord:String = findWord (vertexDistance);
-					var renderPasses:int = currentWord.length / GLYPHS_PER_BATCH;
+					var renderPasses:int = Math.ceil (currentWord.length / GLYPHS_PER_BATCH);
 					
 					for (var i:uint = 0; i < renderPasses; i++ )
 					{	

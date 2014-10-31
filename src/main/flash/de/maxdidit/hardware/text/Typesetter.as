@@ -102,36 +102,44 @@ package de.maxdidit.hardware.text
 		private function applyCharacterSubstitutions( textSpans:Vector.<TextSpan> ):void
 		{
 			var lookupIndices:Vector.<int> = new Vector.<int>();
+			var j:uint;
+			var i:uint;
+			var textSpan:TextSpan;
+			var textFormat:HardwareTextFormat;
+			var font:HardwareFont;
+			var gsubData:GlyphSubstitutionTableData
+			var ll:uint;
+			var characterInstances:LinkedList
 			
 			const l:uint = textSpans.length;
-			for ( var i:uint = 0; i < l; i++ )
+			for ( i = 0; i < l; i++ )
 			{
 				// set up 
-				var textSpan:TextSpan = textSpans[ i ];
+				textSpan = textSpans[ i ];
 				
-				var textFormat:HardwareTextFormat = textSpan.textFormat;
-				var font:HardwareFont = textFormat.font;
+				textFormat = textSpan.textFormat;
+				font = textFormat.font;
 				
-				var gsubData:GlyphSubstitutionTableData = font.data.retrieveTableData( TableNames.GLYPH_SUBSTITUTION_DATA ) as GlyphSubstitutionTableData;
+				gsubData = font.data.retrieveTableData( TableNames.GLYPH_SUBSTITUTION_DATA ) as GlyphSubstitutionTableData;
 				if ( !gsubData )
 				{
 					continue;
 				}
 				
 				retrieveLookupIndices( gsubData, lookupIndices, textFormat );
-				var ll:uint = lookupIndices.length;
+				ll = lookupIndices.length;
 				if ( ll == 0 )
 				{
 					continue
 				}
 				
-				var characterInstances:LinkedList = textSpan.characterInstances;
+				characterInstances = textSpan.characterInstances;
 				characterInstances.gotoFirstElement();
 				
 				while ( characterInstances.currentElement )
 				{
 					var currentCharacter:de.maxdidit.hardware.text.components.HardwareCharacterInstance = characterInstances.currentElement as de.maxdidit.hardware.text.components.HardwareCharacterInstance;
-					for ( var j:uint = 0; j < ll; j++ )
+					for ( j = 0; j < ll; j++ )
 					{
 						currentCharacter.glyph.applyGlyphLookup( TableNames.GLYPH_SUBSTITUTION_DATA, characterInstances, lookupIndices[ j ] );
 					}
@@ -157,19 +165,24 @@ package de.maxdidit.hardware.text
 			
 			var featureIndices:Vector.<uint> = languageSystemTable.featureIndices;
 			
+			var feature:FeatureRecord;
+			var featureLookupIndices:Vector.<uint>;
+			var fl:uint;
+			var f:uint;
+			var i:uint;
 			const l:uint = featureIndices.length;
-			for ( var i:uint = 0; i < l; i++ )
+			for ( i = 0; i < l; i++ )
 			{
-				var feature:FeatureRecord = scriptFeatureLookup.featureListTable.featureRecords[ featureIndices[ i ] ];
+				feature = scriptFeatureLookup.featureListTable.featureRecords[ featureIndices[ i ] ];
 				if ( !textFormat.features.hasFeatureTag( feature.featureTag.tag ) )
 				{
 					continue;
 				}
 				
-				var featureLookupIndices:Vector.<uint> = feature.featureTable.lookupListIndices;
-				var fl:uint = featureLookupIndices.length;
+				featureLookupIndices = feature.featureTable.lookupListIndices;
+				fl = featureLookupIndices.length;
 				
-				for ( var f:uint = 0; f < fl; f++ )
+				for ( f = 0; f < fl; f++ )
 				{
 					lookupIndices.push( featureLookupIndices[ f ] );
 				}
@@ -177,9 +190,9 @@ package de.maxdidit.hardware.text
 		}
 		
 		public function createTextSpans( text:String, standardTextFormat:HardwareTextFormat, cache:HardwareCharacterCache ):Vector.<TextSpan>
-		{
+		{			
 			var fontStack:LinkedList = new LinkedList();
-			fontStack.addElement( new HardwareTextFormatListElement( standardTextFormat ) );
+			fontStack.addElement ( new HardwareTextFormatListElement ( standardTextFormat ) );
 			if ( !cache.textColorMap.hasTextColorId( standardTextFormat.textColor.id ) )
 			{
 				cache.textColorMap.addTextColor( standardTextFormat.textColor );
@@ -189,23 +202,37 @@ package de.maxdidit.hardware.text
 			
 			var switchFont:Boolean = true;
 			
+			//forward declarations
+			var i:uint;
+			var currentFontFormat:HardwareTextFormat;
+			var cmapData:CharacterIndexMappingTableData;
+			var glyfData:GlyphTableData;
+			var currentSpan:TextSpan;
+			var currentCharacterInstances:LinkedList;
+			var charCode:uint;
+			var closingIndex:int;
+			var tagContent:String;
+			var textTag:TextTag;
+			var glyphIndex:int;
+			var currentCharacter:HardwareCharacterInstance;
+			var glyph:Glyph;
+			var lastCharacter:HardwareCharacterInstance;
 			const l:uint = text.length;
-			for ( var i:uint = 0; i < l; i++ )
+			for ( i = 0; i < l; i++ )
 			{
 				// react to tag 
 				if ( switchFont )
 				{
-					var currentFontFormat:HardwareTextFormat = ( fontStack.lastElement as HardwareTextFormatListElement ).hardwareTextFormat;
-					
+					currentFontFormat = ( fontStack.lastElement as HardwareTextFormatListElement ).hardwareTextFormat;
 					if ( currentFontFormat )
 					{
-						var cmapData:CharacterIndexMappingTableData = currentFontFormat.font.data.retrieveTableData( TableNames.CHARACTER_INDEX_MAPPING ) as CharacterIndexMappingTableData;
-						var glyfData:GlyphTableData = currentFontFormat.font.data.retrieveTableData( TableNames.GLYPH_DATA ) as GlyphTableData;
+						cmapData = currentFontFormat.font.data.retrieveTableData( TableNames.CHARACTER_INDEX_MAPPING ) as CharacterIndexMappingTableData;
+						glyfData = currentFontFormat.font.data.retrieveTableData( TableNames.GLYPH_DATA ) as GlyphTableData;
 						
-						var currentSpan:TextSpan = new TextSpan();
+						currentSpan = new TextSpan();
 						currentSpan.textFormat = currentFontFormat;
 						
-						var currentCharacterInstances:LinkedList = new LinkedList();
+						currentCharacterInstances = new LinkedList();
 						currentSpan.characterInstances = currentCharacterInstances;
 						
 						result.push( currentSpan );
@@ -213,17 +240,16 @@ package de.maxdidit.hardware.text
 					
 					switchFont = false;
 				}
-				
-				var charCode:uint = text.charCodeAt( i );
+				charCode = text.charCodeAt( i );
 				// check if a tag is starting 
 				if ( charCode == CHAR_CODE_OPEN_ANGLE_BRACKET )
 				{
 					// check which tag this is. 
-					var closingIndex:int = getClosingBracketIndex( text, i );
+					closingIndex = getClosingBracketIndex( text, i );
 					if ( closingIndex != -1 )
 					{
-						var tagContent:String = text.substring( i + 1, closingIndex );
-						var textTag:TextTag = parseTagContent( tagContent );
+						tagContent = text.substring( i + 1, closingIndex );
+						textTag = parseTagContent( tagContent );
 						if ( textTag )
 						{
 							//we really should be passing ALL the containing text here
@@ -235,20 +261,18 @@ package de.maxdidit.hardware.text
 						}
 					}
 				}
+				glyphIndex = cmapData.getGlyphIndex( charCode, 3, 1 );
 				
-				var glyphIndex:int = cmapData.getGlyphIndex( charCode, 3, 1 );
-				
-				var glyph:Glyph = glyfData.retrieveGlyph( glyphIndex );
-				var currentCharacter:HardwareCharacterInstance = HardwareCharacterInstance.getHardwareCharacterInstance();
+				glyph = glyfData.retrieveGlyph( glyphIndex );
+				currentCharacter = HardwareCharacterInstance.getHardwareCharacterInstance();
 				
 				currentCharacter.charCode = charCode;
 				currentCharacter.glyph = glyph;
 				
 				currentCharacterInstances.addElement( currentCharacter );
 				
-				var lastCharacter:HardwareCharacterInstance = currentCharacter;
+				lastCharacter = currentCharacter;
 			}
-			
 			// apply character substitution 
 			applyCharacterSubstitutions( result );
 			

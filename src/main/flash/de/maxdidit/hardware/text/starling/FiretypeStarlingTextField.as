@@ -6,8 +6,13 @@ package de.maxdidit.hardware.text.starling
 	import de.maxdidit.hardware.text.format.TextAlign;
 	import de.maxdidit.hardware.text.HardwareText;
 	import de.maxdidit.hardware.text.renderer.BatchedGlyphRendererFactory;
+	import de.maxdidit.hardware.text.renderer.SentenceRendererFactory;
 	import de.maxdidit.hardware.text.renderer.SingleGlyphRendererFactory;
 	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.geom.Matrix;
+	import flash.geom.Matrix3D;
+	import flash.geom.Point;
+	import starling.core.CrestronRenderSupport;
 	import starling.core.RenderSupport;
 	import starling.core.Starling;
 	import starling.display.DisplayObjectContainer;
@@ -48,7 +53,7 @@ package de.maxdidit.hardware.text.starling
 			if (!_cache)
 			{
 				//starling cache needs to handle its own handling of lost context
-				_cache = new StarlingHardwareCharacterCache(new SingleGlyphRendererFactory(Starling.current.context, Starling.current.nativeStage));
+				_cache = new StarlingHardwareCharacterCache(new SentenceRendererFactory(Starling.current.context, Starling.current.nativeStage));
 			}
 			
 			if (Starling.current.context)
@@ -317,15 +322,13 @@ package de.maxdidit.hardware.text.starling
 			if (_hardwareText)
 			{
 				support.finishQuadBatch();
-				
-				_hardwareText.calculateTransformations(support.mvpMatrix3D, true);
+				_hardwareText.calculateTransformations (support.mvpMatrix3D, true);
 				_hardwareText.cache.render(_hardwareText);
 				
 				// Reset vertex buffers
 				Starling.current.context.setVertexBufferAt(0, null);
 				Starling.current.context.setVertexBufferAt(1, null);
 			}
-			
 			super.render(support, parentAlpha);
 		}
 		

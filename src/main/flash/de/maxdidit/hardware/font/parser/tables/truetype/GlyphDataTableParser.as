@@ -137,7 +137,8 @@ package de.maxdidit.hardware.font.parser.tables.truetype
 			var components:Vector.<CompositeGlyphComponent> = new Vector.<CompositeGlyphComponent>(); 
 			 
 			var flagData:uint; 
-			var flags:CompositeGlyphFlags; 
+			var flags:CompositeGlyphFlags;
+			var component:CompositeGlyphComponent;
 			do 
 			{ 
 				// the composite flag is parsed outside the actual parseCompositeGlyphComponent function, 
@@ -145,7 +146,7 @@ package de.maxdidit.hardware.font.parser.tables.truetype
 				flagData = _dataTypeParser.parseUnsignedShort(data); 
 				flags = parseCompositeGlyphFlags(flagData); 
 				 
-				var component:CompositeGlyphComponent = parseCompositeGlyphComponent(data, flagData, flags); 
+				component = parseCompositeGlyphComponent(data, flagData, flags); 
 				components.push(component); 
 				 
 			} while (flags.moreComponents); 
@@ -359,13 +360,15 @@ package de.maxdidit.hardware.font.parser.tables.truetype
 		 
 		private function parseFlags(data:ByteArray, numPoints:uint, flagDatas:Vector.<uint>, glyphFlags:Vector.<SimpleGlyphFlags>):void 
 		{ 
-			var i:uint = 0; 
+			var i:uint, j:uint = 0;
+			var flagData:uint;
+			var flags:SimpleGlyphFlags;
 			while (i < numPoints) 
 			{ 
-				var flagData:uint = _dataTypeParser.parseUnsignedByte(data); 
+				flagData = _dataTypeParser.parseUnsignedByte(data); 
 				flagDatas.push(flagData); 
 				 
-				var flags:SimpleGlyphFlags = new SimpleGlyphFlags(); 
+				flags = new SimpleGlyphFlags(); 
 				 
 				flags.onCurve = (flagData & 1) == 1; 
 				 
@@ -381,7 +384,7 @@ package de.maxdidit.hardware.font.parser.tables.truetype
 				flags.isYPositive = flags.shortYVector ? ((flagData >> 5) & 1) == 1 : false; 
 				flags.sameYAsPrevious = !flags.shortYVector ? ((flagData >> 5) & 1) == 1 : false; 
 				 
-				for (var j:uint = 0; j < flags.numRepeats; j++) 
+				for (j = 0; j < flags.numRepeats; j++) 
 				{ 
 					glyphFlags.push(flags); 
 					i++; 

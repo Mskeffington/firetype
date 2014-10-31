@@ -27,6 +27,7 @@ package de.maxdidit.hardware.font.parser
 	import de.maxdidit.hardware.font.HardwareFont; 
 	import de.maxdidit.hardware.font.triangulation.ITriangulator; 
 	import flash.display3D.Context3D; 
+	import flash.events.ErrorEvent;
 	import flash.events.Event; 
 	import flash.events.EventDispatcher; 
 	import flash.events.IOErrorEvent; 
@@ -89,6 +90,7 @@ package de.maxdidit.hardware.font.parser
 			_currentJob = _loaderQueue.shift(); 
 			 
 			_currentJob.addEventListener(Event.COMPLETE, handleFontLoaded); 
+			_currentJob.addEventListener(ErrorEvent.ERROR, handleFontLoadingFailed); 
 			_currentJob.loadFont(_currentJob.url); 
 		} 
 		 
@@ -107,6 +109,13 @@ package de.maxdidit.hardware.font.parser
 			throw new Error("Function not implemented. Extend FontParser and implement function."); 
 			return null; 
 		} 
+		
+		protected function removeEventHandlers():void 
+		{
+			_currentJob.removeEventListener(Event.COMPLETE, handleFontLoaded); 
+			_currentJob.removeEventListener (ErrorEvent.ERROR, handleFontLoadingFailed); 
+			
+		}
 		 
 		/////////////////////// 
 		// Event Handler 
@@ -114,7 +123,7 @@ package de.maxdidit.hardware.font.parser
 		 
 		private function handleFontLoaded(e:Event):void  
 		{ 
-			// TODO: provide feedback that font has been loaded. 
+			removeEventHandlers ();
 			var fontLoaderJob:FontLoaderJob = e.target as FontLoaderJob; 
 			 
 			var urlLoader:URLLoader = fontLoaderJob.urlLoader; 
@@ -128,11 +137,15 @@ package de.maxdidit.hardware.font.parser
 			loadNextJob(); 
 		} 
 		 
-		private function handleFontLoadingFailed(e:Event):void  
+		private function handleFontLoadingFailed(e:ErrorEvent):void  
 		{	 
+			removeEventHandlers ();
+			
 			var fontLoaderJob:FontLoaderJob = e.target as FontLoaderJob; 
 			var urlLoader:URLLoader = fontLoaderJob.urlLoader; 
-			 
+			
+			dispatchEvent (e);
+			
 			loadNextJob(); 
 		} 
 	} 

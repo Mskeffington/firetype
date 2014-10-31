@@ -59,12 +59,16 @@ package de.maxdidit.hardware.font.parser.tables.truetype.contours
 			var result:Vector.<Contour> = new Vector.<Contour>(l);
 			
 			var i:uint = 0;
+			var endPoint:uint;
+			var contour:Contour
+			var vertices:CircularLinkedList;
+			
+				
 			for (var c:uint = 0; c < l; c++)
 			{
-				var endPoint:uint = endPointsOfContours[c];
-				var contour:Contour = new Contour();
-				var vertices:CircularLinkedList = new CircularLinkedList;
-				
+				endPoint = endPointsOfContours[c];
+				contour = new Contour();
+				vertices = new CircularLinkedList;
 				// There seems to be only one point in this contour. Skip it. 
 				if (i == endPoint)
 				{
@@ -91,8 +95,7 @@ package de.maxdidit.hardware.font.parser.tables.truetype.contours
 				// actually compile vertices 
 				for (i; i <= endPoint; i++)
 				{
-					var vertex:Vertex = new Vertex(xCoordinates[i], yCoordinates[i], flags[i].onCurve);
-					vertices.addElement(new VertexListElement(vertex));
+					vertices.addElement(new VertexListElement(new Vertex(xCoordinates[i], yCoordinates[i], flags[i].onCurve)));
 				}
 				
 				addImplicitVertices(vertices);
@@ -107,14 +110,15 @@ package de.maxdidit.hardware.font.parser.tables.truetype.contours
 		private function addImplicitVertices(vertices:CircularLinkedList):void
 		{
 			var currentVertex:VertexListElement = vertices.firstElement as VertexListElement;
-			
+			var nextVertex:VertexListElement;
+			var newVertex:Vertex;
 			do
 			{
-				var nextVertex:VertexListElement = currentVertex.next as VertexListElement;
+				nextVertex = currentVertex.next as VertexListElement;
 				
 				if (!currentVertex.vertex.onCurve && !nextVertex.vertex.onCurve)
 				{
-					var newVertex:Vertex = new Vertex((currentVertex.vertex.x + nextVertex.vertex.x) / 2, // 
+					newVertex = new Vertex((currentVertex.vertex.x + nextVertex.vertex.x) / 2, // 
 						(currentVertex.vertex.y + nextVertex.vertex.y) / 2);
 					vertices.addElementAfter(new VertexListElement(newVertex), currentVertex);
 				}
@@ -135,22 +139,21 @@ package de.maxdidit.hardware.font.parser.tables.truetype.contours
 			
 			var thisVertex:VertexListElement = startVertex;
 			var nextVertex:VertexListElement;
+			var controlPoints:Vector.<Vertex>;
 			
 			do
 			{
 				nextVertex = thisVertex.next as VertexListElement;
 				
 				// parse segment 
-				var segment:IPathSegment;
 				
 				if (nextVertex.vertex.onCurve)
 				{
-					var line:Line = new Line(thisVertex.vertex, nextVertex.vertex);
-					segment = line;
+					result.push(new Line(thisVertex.vertex, nextVertex.vertex));
 				}
 				else
 				{
-					var controlPoints:Vector.<Vertex> = new Vector.<Vertex>();
+					controlPoints = new Vector.<Vertex>();
 					controlPoints.push(thisVertex.vertex);
 					
 					do
@@ -167,17 +170,13 @@ package de.maxdidit.hardware.font.parser.tables.truetype.contours
 						controlPoints[1].x * (controlPoints[2].y - controlPoints[0].y) + //
 						controlPoints[2].x * (controlPoints[0].y - controlPoints[1].y) == 0)
 					{
-						line = new Line(controlPoints[0], controlPoints[2]);
-						segment = line;
+						result.push(new Line(controlPoints[0], controlPoints[2]));
 					}
 					else
 					{
-						var curve:Curve = new Curve(controlPoints);
-						segment = curve;
+						result.push(new Curve(controlPoints));
 					}
 				}
-				
-				result.push(segment);
 				
 				// iterate over list 
 				thisVertex = nextVertex;

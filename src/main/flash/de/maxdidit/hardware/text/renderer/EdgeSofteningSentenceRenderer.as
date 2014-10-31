@@ -158,7 +158,7 @@ package de.maxdidit.hardware.text.renderer
 				{
 					//figure out what the string says.
 					var currentWord:String = findWord (vertexDistance);
-					var renderPasses:int = currentWord.length / GLYPHS_PER_BATCH;
+					var renderPasses:int = Math.ceil(currentWord.length / GLYPHS_PER_BATCH);
 					
 					for (var i:uint = 0; i < renderPasses; i++ )
 					{	

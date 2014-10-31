@@ -45,7 +45,6 @@ package de.maxdidit.hardware.text.glyphbuilders
 			for (i = 0; i < pl; i++)
 			{
 				var path:Vector.<Vertex> = originalPaths[i];
-				calculateCurveDistance (-1, path);
 				buildOutline(result, path);
 			}
 			
@@ -95,8 +94,7 @@ package de.maxdidit.hardware.text.glyphbuilders
 				outlineVertices[i] = vertexB;
 				
 			}
-			calculateCurveDistance (1.5, outlineVertices); 
-			calculateCurveDistance (1.5, outlineBase);
+			calculateCurveDistance (1, outlineVertices); 
 			
 			
 			var len:int;

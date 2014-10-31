@@ -265,7 +265,7 @@ package de.maxdidit.hardware.text.cache
 			if ( hardwareText != null)
 			{
 				//this is a hack... no?
-				hardwareText.update ();
+				hardwareText.update (true);
 				
 				for each (section in _sectionsByText[hardwareText])
 				{

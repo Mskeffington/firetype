@@ -22,6 +22,7 @@ along with 'firetype'.  If not, see <http://www.gnu.org/licenses/>.
  
 package de.maxdidit.hardware.font.parser  
 { 
+	import flash.events.ErrorEvent;
 	import flash.events.Event; 
 	import flash.events.EventDispatcher; 
 	import flash.events.IOErrorEvent; 
@@ -91,17 +92,30 @@ package de.maxdidit.hardware.font.parser
 		private function removeEventHandlerFromLoader(urlLoader:URLLoader):void 
 		{ 
 			urlLoader.removeEventListener(Event.COMPLETE, handleFontLoaded); 
-			urlLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, handleFontLoadingFailed); 
-			urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, handleFontLoadingFailed); 
+			urlLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError); 
+			urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, onIOError); 
 		} 
 		 
-		private function handleFontLoadingFailed(e:Event):void  
+		private function onIOError(e:IOErrorEvent):void  
 		{ 
-			// TODO: provide feedback that the font could not be loaded and why. 
-			 
 			var urlLoader:URLLoader = e.target as URLLoader; 
 			removeEventHandlerFromLoader(urlLoader); 
+			 
+			fontLoadingFailed (e.text);
 		} 
+		
+		private function onSecurityError(e:SecurityErrorEvent):void 
+		{
+			var urlLoader:URLLoader = e.target as URLLoader; 
+			removeEventHandlerFromLoader(urlLoader); 
+			
+			fontLoadingFailed (e.text);
+		}
+		
+		private function fontLoadingFailed (text:String):void
+		{
+			dispatchEvent(new ErrorEvent(ErrorEvent.ERROR,false, false, text)); 
+		}
 		 
 		private function handleFontLoaded(e:Event):void  
 		{			 
@@ -110,5 +124,6 @@ package de.maxdidit.hardware.font.parser
 			 
 			dispatchEvent(new Event(Event.COMPLETE)); 
 		} 
+			
 	} 
 } 
